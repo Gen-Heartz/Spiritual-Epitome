@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#332c24">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Grimório">
+  <link rel="manifest" href="manifest.json">
+  <title>Grimório do Mestre</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="menu.css">
+</head>
+<body>
+
+  <div class="tela-menu">
+
+    <div class="menu-moldura">
+
+      <div class="moldura-canto moldura-canto--tl"></div>
+      <div class="moldura-canto moldura-canto--tr"></div>
+      <div class="moldura-canto moldura-canto--bl"></div>
+      <div class="moldura-canto moldura-canto--br"></div>
+
+      <header class="menu-cabecalho">
+        <div class="cabecalho-ornamento"></div>
+        <h1 class="menu-titulo">Grimorio do Mestre</h1>
+        <p class="menu-subtitulo">Forjado nas Chamas do Conhecimento Arcano</p>
+        <div class="cabecalho-ornamento"></div>
+      </header>
+
+      <div class="divider-golden menu-divisor"></div>
+
+      <nav class="menu-grid" id="menuGrid">
+
+        <button class="menu-botao" data-menu="glossario">
+          <span class="botao-icone">&#9733;</span>
+          <span class="botao-texto">Glossario</span>
+          <span class="botao-descricao">Termos e Saberes</span>
+        </button>
+
+        <button class="menu-botao" data-menu="fichas">
+          <span class="botao-icone">&#9830;</span>
+          <span class="botao-texto">Fichas</span>
+          <span class="botao-descricao">Herois e Criaturas</span>
+        </button>
+
+        <button class="menu-botao" data-menu="sistema">
+          <span class="botao-icone">&#9881;</span>
+          <span class="botao-texto">Sistema</span>
+          <span class="botao-descricao">Regras e Mecanicas</span>
+        </button>
+
+        <button class="menu-botao" data-menu="construcao">
+          <span class="botao-icone">&#9878;</span>
+          <span class="botao-texto">Construcao</span>
+          <span class="botao-descricao">Forja de Mundos</span>
+        </button>
+
+        <button class="menu-botao" data-menu="salvar">
+          <span class="botao-icone">&#10050;</span>
+          <span class="botao-texto">Salvar</span>
+          <span class="botao-descricao">Exportar Dados</span>
+        </button>
+
+        <button class="menu-botao" data-menu="carregar">
+          <span class="botao-icone">&#10070;</span>
+          <span class="botao-texto">Carregar</span>
+          <span class="botao-descricao">Importar Registros</span>
+        </button>
+
+      </nav>
+
+      <div class="divider-golden menu-divisor"></div>
+
+      <footer class="menu-rodape">
+        <p class="rodape-texto">"Que a luz das estrelas guie vossa jornada"</p>
+      </footer>
+
+    </div>
+
+    <div class="menu-notificacao" id="menuNotificacao">
+      <p class="notificacao-texto" id="notificacaoTexto"></p>
+    </div>
+
+  </div>
+
+  <script src="db.js"></script>
+  <script src="exportar.js"></script>
+  <script src="menu.js"></script>
+</body>
+</html>
