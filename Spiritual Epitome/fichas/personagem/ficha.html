@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#332c24">
+  <title>Ficha de Personagem - Grimorio do Mestre</title>
+  <link rel="manifest" href="../../manifest.json">
+  <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="ficha.css">
+</head>
+<body>
+
+<div class="ficha-container" id="fichaApp">
+
+  <!-- ABAS -->
+  <nav class="ficha-abas" id="fichaAbas">
+    <button class="ficha-aba ativa" data-aba="identidade"><span class="aba-nome">Identidade</span></button>
+    <button class="ficha-aba" data-aba="pericias"><span class="aba-nome">Pericias</span></button>
+    <button class="ficha-aba" data-aba="campos"><span class="aba-nome">Campos</span></button>
+    <button class="ficha-aba" data-aba="combate"><span class="aba-nome">Combate</span></button>
+    <button class="ficha-aba" data-aba="magia"><span class="aba-nome">Magia</span></button>
+    <button class="ficha-aba" data-aba="inventario"><span class="aba-nome">Inventario</span></button>
+  </nav>
+
+  <!-- ============================== IDENTIDADE ============================== -->
+  <section class="ficha-painel ativo" data-painel="identidade">
+    <div class="painel-moldura">
+      <div class="moldura-canto moldura-canto--tl"></div>
+      <div class="moldura-canto moldura-canto--tr"></div>
+      <div class="moldura-canto moldura-canto--bl"></div>
+      <div class="moldura-canto moldura-canto--br"></div>
+
+      <header class="painel-cabecalho">
+        <div class="cabecalho-ornamento"></div>
+        <h2 class="painel-titulo">Identidade & Registros</h2>
+        <p class="painel-subtitulo">A Essencia do Heroi</p>
+        <div class="cabecalho-ornamento"></div>
+      </header>
+      <div class="divider-golden"></div>
+
+      <div class="campo-grupo">
+        <label class="campo-label">Nome do Jogador <span class="tooltip-trigger" data-tooltip="Nome real do jogador.">?</span></label>
+        <input type="text" class="campo-input" placeholder="Ex: Joao Silva" maxlength="60" data-campo="nomeJogador">
+      </div>
+      <div class="campo-grupo">
+        <label class="campo-label">Nome do Personagem <span class="tooltip-trigger" data-tooltip="Nome ficticio do heroi.">?</span></label>
+        <input type="text" class="campo-input campo-input--grande" placeholder="Ex: Kael, o Andarilho" maxlength="60" data-campo="nome">
+      </div>
+      <div class="campo-grupo">
+        <label class="campo-label">Conceito / Historia <span class="tooltip-trigger" data-tooltip="Breve descricao do personagem.">?</span></label>
+        <textarea class="campo-textarea" placeholder="Ex: Mercenario solitario..." rows="4" maxlength="600" data-campo="conceito"></textarea>
+      </div>
+
+      <div class="divider-golden"></div>
+
+      <div class="campo-linha">
+        <div class="campo-grupo campo-grupo--metade">
+          <label class="campo-label">Linhagem <span class="tooltip-trigger" data-tooltip="Define a origem da energia sobrenatural.">?</span></label>
+          <select id="linhagemSelect" class="campo-select" data-campo="linhagem">
+            <option value="">-- Escolha --</option>
+            <option value="pungente">Pungente</option>
+            <option value="erudita">Erudita</option>
+            <option value="agraco">Agraco</option>
+            <option value="desperta">Desperta</option>
+            <option value="espectro">Espectro</option>
+          </select>
+        </div>
+        <div class="campo-grupo campo-grupo--metade">
+          <label class="campo-label">Tribo <span class="tooltip-trigger" data-tooltip="Faccao do personagem.">?</span></label>
+          <input type="text" class="campo-input" placeholder="Ex: Filhos do Crepusculo" maxlength="60" data-campo="tribo">
+        </div>
+      </div>
+
+      <div class="linhagem-indicador">
+        <span class="linhagem-badge" id="linhagemBadge">Nenhuma Linhagem</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== PERICIAS ============================== -->
+  <section class="ficha-painel" data-painel="pericias">
+    <div class="painel-moldura">
+      <div class="moldura-canto moldura-canto--tl"></div>
+      <div class="moldura-canto moldura-canto--tr"></div>
+      <div class="moldura-canto moldura-canto--bl"></div>
+      <div class="moldura-canto moldura-canto--br"></div>
+
+      <header class="painel-cabecalho">
+        <div class="cabecalho-ornamento"></div>
+        <h2 class="painel-titulo">Matriz de Pericias</h2>
+        <p class="painel-subtitulo">Organizada por Triades</p>
+        <div class="cabecalho-ornamento"></div>
+      </header>
+      <div class="divider-golden"></div>
+
+      <!-- Cabecalho de Nivel / XP / Pericias -->
+      <div class="pericia-cabecalho">
+        <div class="pericia-cabecalho-item">
+          <label class="pericia-cabecalho-label">Nivel <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Nivel do personagem. Pericias Totais = 5 + (Nivel x 3).">?</span></label>
+          <input type="number" id="nivel" class="campo-input campo-input--centro" value="1" min="1" data-campo="nivel">
+        </div>
+        <div class="pericia-cabecalho-item">
+          <label class="pericia-cabecalho-label">XP <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Experiencia acumulada. Auxilia o mestre a decidir quando subir de nivel.">?</span></label>
+          <input type="number" id="xp" class="campo-input campo-input--centro" value="0" min="0" data-campo="xp">
+        </div>
+        <div class="pericia-cabecalho-item">
+          <label class="pericia-cabecalho-label">Totais <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Total de pontos de pericia disponiveis = 5 + (Nivel x 3).">?</span></label>
+          <input type="number" id="periciasTotal" class="campo-input campo-input--centro campo-input--readonly" value="8" readonly>
+        </div>
+        <div class="pericia-cabecalho-item">
+          <label class="pericia-cabecalho-label">Restantes <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Pontos de pericia ainda nao distribuidos. Fica vermelho se negativo.">?</span></label>
+          <input type="number" id="periciasAtual" class="campo-input campo-input--centro campo-input--readonly" value="8" readonly>
+        </div>
+      </div>
+
+      <div class="divider-golden"></div>
+
+      <div class="pericias-matriz" id="periciaMatriz">
+
+        <div class="pericias-linha">
+          <div class="pericia-grupo">
+            <h3 class="pericia-grupo-titulo">Fisico</h3>
+            <div class="pericia-triade">
+              <div class="pericia-item"><div class="pericia-info"><label class="pericia-label">Atletismo</label><span class="pericia-tipo">Agilidade</span><span class="tooltip-trigger tooltip-trigger--pericia" data-tooltip="Atletismo: Deslocamento (2m base), mobilidade. Influencia: Deslocamento, Agilidade combate, Estamina.">?</span></div><div class="pericia-valores"><input type="number" class="campo-input campo-input--mini pericia-pontos" value="0" min="0" max="10" data-pericia="atletismo"><span class="pericia-seta">&#8594;</span><span class="pericia-mod" data-mod="atletismo">+0</span></div></div>
+              <div class="pericia-item"><div class="pericia-info"><label class="pericia-label">Vigor</label><span class="pericia-tipo">Forca</span><span class="tooltip-trigger tooltip-trigger--pericia" data-tooltip="Vigor: Vitalidade. Influencia: Vida Total (x3), Descanso (recupera Vigor por tipo).">?</span></div><div class="pericia-valores"><input type="number" class="campo-input campo-input--mini pericia-pontos" value="0" min="0" max="10" data-pericia="vigor"><span class="pericia-seta">&#8594;</span><span class="pericia-mod" data-mod="vigor">+0</span></div></div>
+              <div class="pericia-item"><div class="pericia-info"><label class="pericia-label">Tolerancia</label><span class="pericia-tipo">Resistencia</span><span class="tooltip-trigger tooltip-trigger--pericia" data-tooltip="Tolerancia: Resistencia a dano. Influencia: Estamina Total (x2), Dano Fisico.">?</span></div><div class="pericia-valores"><input type="number" class="campo-input campo-input--mini pericia-pontos" value="0" min="0" max="10" data-pericia="tolerancia"><span class="pericia-seta">&#8594;</span><span class="pericia-mod" data-mod="tolerancia">+0</span></div></div>
+            </div>
+          </div>
+          <div class="pericia-grupo">
+            <h3 class="pericia-grupo-titulo">Mental</h3>
+            <div class="pericia-triade">
+              <div class="pericia-item"><div class="pericia-info"><label class="pericia-label">Analise</label><span class="pericia-tipo">Agilidade</span><span class="tooltip-trigger tooltip-trigger--pericia" data-tooltip="Analise: Deducao e logica. Influencia: Raciocinio Total (x0.5).">?</span></div><div class="pericia-valores"><input type="number" class="campo-input campo-input--mini pericia-pontos" value="0" min="0" max="10" data-pericia="analise"><span class="pericia-seta">&#8594;</span><span class="pericia-mod" data-mod="analise">+0</span></div></div>
+              <div class="pericia-item"><div class="pericia-info"><label class="pericia-label">Foco</label><span class="pericia-tipo">Forca</span><span class="tooltip-trigger tooltip-trigger--pericia" data-tooltip="Foco: Precisao e atencao. Influencia: Raciocinio, Agilidade combate, Vel. Magica, Alcance.">?</span></div><div class="pericia-valores"><input type="number" class="campo-input campo-input--mini pericia-pontos" value="0" min="0" max="10" data-pericia="foco"><span class="pericia-seta">&#8594;</span><span class="pericia-mod" data-mod="foco">+0</span></div></div>
+              <div class="pericia-item"><div class="pericia-info"><label class="pericia-label">Concentracao</label><span class="pericia-tipo">Resistencia</span><span class="tooltip-trigger tooltip-trigger--pericia" data-tooltip="Concentracao: Manutencao de efeitos. Influencia: Raciocinio Total (x2.5), Recuperar Rac (x2), Dens. Magica.">?</span></div><div class="pericia-valores"><input type="number" class="campo-input campo-input--mini pericia-pontos" value="0" min="0" max="10" data-pericia="concentracao"><span class="pericia-seta">&#8594;</span><span class="pericia-mod" data-mod="concentracao">+0</span></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pericias-linha">
+          <div class="pericia-grupo">
+            <h3 class="pericia-grupo-titulo">Espiritual</h3>
+            <div class="pericia-triade">
+              <div class="pericia-item"><div class="pericia-info"><label class="pericia-label">Canalizacao</label><span class="pericia-tipo">Agilidade</span><span class="tooltip-trigger tooltip-trigger--pericia" data-tooltip="Canalizacao: Projecao de energia. Influencia: Mana, Vel. Magica, Dano Magico, Alcance, Desl. Magia. Desbloqueia slots.">?</span></div><div class="pericia-valores"><input type="number" class="campo-input campo-input--mini pericia-pontos" value="0" min="0" max="10" data-pericia="canalizacao"><span class="pericia-seta">&#8594;</span><span class="pericia-mod" data-mod="canalizacao">+0</span></div></div>
+              <div class="pericia-item"><div class="pericia-info"><label class="pericia-label">Integracao</label><span class="pericia-tipo">Forca</span><span class="tooltip-trigger tooltip-trigger--pericia" data-tooltip="Integracao: Conexao espiritual. Influencia: Mana, Dano Magico (x1.5), Vel/Dens Magica. Desbloqueia slots.">?</span></div><div class="pericia-valores"><input type="number" class="campo-input campo-input--mini pericia-pontos" value="0" min="0" max="10" data-pericia="integracao"><span class="pericia-seta">&#8594;</span><span class="pericia-mod" data-mod="integracao">+0</span></div></div>
+              <div class="pericia-item"><div class="pericia-info"><label class="pericia-label">Ancoragem</label><span class="pericia-tipo">Resistencia</span><span class="tooltip-trigger tooltip-trigger--pericia" data-tooltip="Ancoragem: Estabilidade espiritual. Influencia: Mana Total (x2), Dens. Magica.">?</span></div><div class="pericia-valores"><input type="number" class="campo-input campo-input--mini pericia-pontos" value="0" min="0" max="10" data-pericia="ancoragem"><span class="pericia-seta">&#8594;</span><span class="pericia-mod" data-mod="ancoragem">+0</span></div></div>
+            </div>
+          </div>
+          <div class="pericia-grupo">
+            <h3 class="pericia-grupo-titulo">Sentidos</h3>
+            <div class="pericia-triade">
+              <div class="pericia-item"><div class="pericia-info"><label class="pericia-label">Prontidao</label><span class="pericia-tipo">Agilidade</span><span class="tooltip-trigger tooltip-trigger--pericia" data-tooltip="Prontidao: Iniciativa. Influencia: Dano Fisico (x0.4), Agilidade combate (x1.5).">?</span></div><div class="pericia-valores"><input type="number" class="campo-input campo-input--mini pericia-pontos" value="0" min="0" max="10" data-pericia="prontidao"><span class="pericia-seta">&#8594;</span><span class="pericia-mod" data-mod="prontidao">+0</span></div></div>
+              <div class="pericia-item"><div class="pericia-info"><label class="pericia-label">Investigacao</label><span class="pericia-tipo">Forca</span><span class="tooltip-trigger tooltip-trigger--pericia" data-tooltip="Investigacao: Busca. Nao influencia campos calculados.">?</span></div><div class="pericia-valores"><input type="number" class="campo-input campo-input--mini pericia-pontos" value="0" min="0" max="10" data-pericia="investigacao"><span class="pericia-seta">&#8594;</span><span class="pericia-mod" data-mod="investigacao">+0</span></div></div>
+              <div class="pericia-item"><div class="pericia-info"><label class="pericia-label">Sensibilidade</label><span class="pericia-tipo">Resistencia</span><span class="tooltip-trigger tooltip-trigger--pericia" data-tooltip="Sensibilidade: Percepcao sutil. Influencia: Vel. Magica, Alcance (x1.7).">?</span></div><div class="pericia-valores"><input type="number" class="campo-input campo-input--mini pericia-pontos" value="0" min="0" max="10" data-pericia="sensibilidade"><span class="pericia-seta">&#8594;</span><span class="pericia-mod" data-mod="sensibilidade">+0</span></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pericias-linha">
+          <div class="pericia-grupo">
+            <h3 class="pericia-grupo-titulo">Social</h3>
+            <div class="pericia-triade">
+              <div class="pericia-item"><div class="pericia-info"><label class="pericia-label">Sensacao</label><span class="pericia-tipo">Agilidade</span><span class="tooltip-trigger tooltip-trigger--pericia" data-tooltip="Sensacao: Presenca. Nao influencia campos calculados.">?</span></div><div class="pericia-valores"><input type="number" class="campo-input campo-input--mini pericia-pontos" value="0" min="0" max="10" data-pericia="sensacao"><span class="pericia-seta">&#8594;</span><span class="pericia-mod" data-mod="sensacao">+0</span></div></div>
+              <div class="pericia-item"><div class="pericia-info"><label class="pericia-label">Persuasao</label><span class="pericia-tipo">Forca</span><span class="tooltip-trigger tooltip-trigger--pericia" data-tooltip="Persuasao: Convencimento. Nao influencia campos calculados.">?</span></div><div class="pericia-valores"><input type="number" class="campo-input campo-input--mini pericia-pontos" value="0" min="0" max="10" data-pericia="persuasao"><span class="pericia-seta">&#8594;</span><span class="pericia-mod" data-mod="persuasao">+0</span></div></div>
+              <div class="pericia-item"><div class="pericia-info"><label class="pericia-label">Empatia</label><span class="pericia-tipo">Resistencia</span><span class="tooltip-trigger tooltip-trigger--pericia" data-tooltip="Empatia: Leitura emocional. Nao influencia campos calculados.">?</span></div><div class="pericia-valores"><input type="number" class="campo-input campo-input--mini pericia-pontos" value="0" min="0" max="10" data-pericia="empatia"><span class="pericia-seta">&#8594;</span><span class="pericia-mod" data-mod="empatia">+0</span></div></div>
+            </div>
+          </div>
+          <div class="pericia-grupo">
+            <h3 class="pericia-grupo-titulo">Combate</h3>
+            <div class="pericia-triade">
+              <div class="pericia-item"><div class="pericia-info"><label class="pericia-label">Agilidade</label><span class="pericia-tipo">Agilidade</span><span class="tooltip-trigger tooltip-trigger--pericia" data-tooltip="Agilidade combate: Esquiva. Influencia: Agilidade Combate (x1.5).">?</span></div><div class="pericia-valores"><input type="number" class="campo-input campo-input--mini pericia-pontos" value="0" min="0" max="10" data-pericia="agilidade"><span class="pericia-seta">&#8594;</span><span class="pericia-mod" data-mod="agilidade">+0</span></div></div>
+              <div class="pericia-item"><div class="pericia-info"><label class="pericia-label">Forca</label><span class="pericia-tipo">Forca</span><span class="tooltip-trigger tooltip-trigger--pericia" data-tooltip="Forca combate: Dano corpo a corpo. Influencia: Dano Fisico (x1.5).">?</span></div><div class="pericia-valores"><input type="number" class="campo-input campo-input--mini pericia-pontos" value="0" min="0" max="10" data-pericia="forca"><span class="pericia-seta">&#8594;</span><span class="pericia-mod" data-mod="forca">+0</span></div></div>
+              <div class="pericia-item"><div class="pericia-info"><label class="pericia-label">Manualidade</label><span class="pericia-tipo">Resistencia</span><span class="tooltip-trigger tooltip-trigger--pericia" data-tooltip="Manualidade: Destreza com armas. Influencia: Dano Arma (x3).">?</span></div><div class="pericia-valores"><input type="number" class="campo-input campo-input--mini pericia-pontos" value="0" min="0" max="10" data-pericia="manualidade"><span class="pericia-seta">&#8594;</span><span class="pericia-mod" data-mod="manualidade">+0</span></div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== CAMPOS ============================== -->
+  <section class="ficha-painel" data-painel="campos">
+    <div class="painel-moldura">
+      <div class="moldura-canto moldura-canto--tl"></div>
+      <div class="moldura-canto moldura-canto--tr"></div>
+      <div class="moldura-canto moldura-canto--bl"></div>
+      <div class="moldura-canto moldura-canto--br"></div>
+
+      <header class="painel-cabecalho">
+        <div class="cabecalho-ornamento"></div>
+        <h2 class="painel-titulo">Os 4 Campos</h2>
+        <p class="painel-subtitulo">Recursos Vitais</p>
+        <div class="cabecalho-ornamento"></div>
+      </header>
+      <div class="divider-golden"></div>
+
+      <div class="campos-grade">
+
+        <!-- VIDA -->
+        <div class="campo-bloco">
+          <label class="campo-label">Vida <span class="tooltip-trigger" data-tooltip="Total = 10 + Bonus Circulacao + (Vigor x 3). Perdida: Enter aplica dano (negativo = cura). Vendida: Enter aplica (negativo cancela).">?</span></label>
+          <div class="recurso-display">
+            <div class="recurso-celula">
+              <span class="recurso-rotulo">Total</span>
+              <span class="recurso-valor" id="vidaTotal">10</span>
+            </div>
+            <div class="recurso-celula recurso-celula--destaque">
+              <span class="recurso-rotulo">Atual</span>
+              <span class="recurso-valor recurso-valor--vida" id="vidaAtualDisplay">10</span>
+            </div>
+          </div>
+          <div class="campo-linha">
+            <div class="campo-grupo campo-grupo--metade">
+              <label class="campo-label campo-label--sm">Perdida <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Dano recebido. Enter aplica e limpa. Negativo = cura.">?</span></label>
+              <input type="number" id="vidaPerdida" class="campo-input campo-input--centro campo-input--acao campo-input--acao-dano" placeholder="Enter...">
+            </div>
+            <div class="campo-grupo campo-grupo--metade">
+              <label class="campo-label campo-label--sm">Vendida <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Vender vida permanentemente. Negativo cancela.">?</span></label>
+              <input type="number" id="vidaVendida" class="campo-input campo-input--centro campo-input--acao campo-input--acao-moeda" placeholder="Enter...">
+              <div class="campo-info-linha">
+                <span class="campo-info-rotulo">Vendida:</span>
+                <span class="campo-info-valor campo-info-valor--negativo" id="vidaVendidaDisplay">0</span>
+              </div>
+            </div>
+          </div>
+          <label class="campo-label campo-label--sm">Descanso</label>
+          <div class="campo-acao-linha campo-acao-linha--descanso">
+            <button class="campo-acao-btn campo-acao-btn--descanso" data-descanso="curto">Curto</button>
+            <button class="campo-acao-btn campo-acao-btn--descanso" data-descanso="medio">Medio</button>
+            <button class="campo-acao-btn campo-acao-btn--descanso" data-descanso="longo">Longo</button>
+          </div>
+          <input type="number" id="descCustom" class="campo-input campo-input--centro campo-input--acao campo-input--acao-cura" placeholder="Valor customizado + Enter" style="margin-top:6px;">
+        </div>
+
+        <!-- MANA -->
+        <div class="campo-bloco">
+          <label class="campo-label">Mana <span class="tooltip-trigger" data-tooltip="Total = 5 + Bonus Circulacao + (Ancoragem x 2) + (Integracao x 0.5) + (Canalizacao x 0.5). Atual = Total - Vendida - Slots.">?</span></label>
+          <div class="recurso-display">
+            <div class="recurso-celula">
+              <span class="recurso-rotulo">Total</span>
+              <span class="recurso-valor" id="manaTotal">5</span>
+            </div>
+            <div class="recurso-celula recurso-celula--destaque">
+              <span class="recurso-rotulo">Atual</span>
+              <span class="recurso-valor recurso-valor--mana" id="manaAtualDisplay">5</span>
+            </div>
+          </div>
+          <div class="campo-grupo">
+            <label class="campo-label campo-label--sm">Vendida <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Vender mana permanentemente. Negativo cancela.">?</span></label>
+            <input type="number" id="manaVendida" class="campo-input campo-input--centro campo-input--acao" placeholder="Enter..." style="border-color:#333366;">
+            <div class="campo-info-linha">
+              <span class="campo-info-rotulo">Vendida:</span>
+              <span class="campo-info-valor" id="manaVendidaDisplay" style="color:#6b9bff;">0</span>
+            </div>
+          </div>
+          <div class="campo-linha" style="margin-bottom:0;">
+            <div class="campo-grupo campo-grupo--metade modal-ancora">
+              <button class="campo-acao-btn campo-acao-btn--modal" id="btnInterno" type="button">Interno</button>
+              <div class="modal-popup" id="modalInterno">
+                <div class="modal-popup-titulo">Slots Internos <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Slots 3-4 desbloqueiam com Integracao >= 3 e >= 6. Custo desconta do Mana Atual.">?</span></div>
+                <div class="slot-linha"><input type="text" class="campo-input slot-texto" placeholder="Nome" data-slot="int-1"><input type="number" class="campo-input campo-input--mini slot-num" value="0" min="0" data-slot-custo="int-1"></div>
+                <div class="slot-linha"><input type="text" class="campo-input slot-texto" placeholder="Nome" data-slot="int-2"><input type="number" class="campo-input campo-input--mini slot-num" value="0" min="0" data-slot-custo="int-2"></div>
+                <div class="slot-linha"><input type="text" class="campo-input slot-texto" placeholder="Nome" data-slot="int-3" disabled><input type="number" class="campo-input campo-input--mini slot-num" value="0" min="0" data-slot-custo="int-3" disabled></div>
+                <div class="slot-linha"><input type="text" class="campo-input slot-texto" placeholder="Nome" data-slot="int-4" disabled><input type="number" class="campo-input campo-input--mini slot-num" value="0" min="0" data-slot-custo="int-4" disabled></div>
+              </div>
+            </div>
+            <div class="campo-grupo campo-grupo--metade modal-ancora">
+              <button class="campo-acao-btn campo-acao-btn--modal" id="btnExterno" type="button">Externo</button>
+              <div class="modal-popup" id="modalExterno">
+                <div class="modal-popup-titulo">Slots Externos <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Slot 4: Integracao >= 3. Slot 5: Canalizacao >= 3. Slot 6: Canalizacao >= 6.">?</span></div>
+                <div class="slot-linha"><input type="text" class="campo-input slot-texto" placeholder="Nome" data-slot="ext-1"><input type="number" class="campo-input campo-input--mini slot-num" value="0" min="0" data-slot-custo="ext-1"></div>
+                <div class="slot-linha"><input type="text" class="campo-input slot-texto" placeholder="Nome" data-slot="ext-2"><input type="number" class="campo-input campo-input--mini slot-num" value="0" min="0" data-slot-custo="ext-2"></div>
+                <div class="slot-linha"><input type="text" class="campo-input slot-texto" placeholder="Nome" data-slot="ext-3"><input type="number" class="campo-input campo-input--mini slot-num" value="0" min="0" data-slot-custo="ext-3"></div>
+                <div class="slot-linha"><input type="text" class="campo-input slot-texto" placeholder="Nome" data-slot="ext-4" disabled><input type="number" class="campo-input campo-input--mini slot-num" value="0" min="0" data-slot-custo="ext-4" disabled></div>
+                <div class="slot-linha"><input type="text" class="campo-input slot-texto" placeholder="Nome" data-slot="ext-5" disabled><input type="number" class="campo-input campo-input--mini slot-num" value="0" min="0" data-slot-custo="ext-5" disabled></div>
+                <div class="slot-linha"><input type="text" class="campo-input slot-texto" placeholder="Nome" data-slot="ext-6" disabled><input type="number" class="campo-input campo-input--mini slot-num" value="0" min="0" data-slot-custo="ext-6" disabled></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ESTAMINA -->
+        <div class="campo-bloco">
+          <label class="campo-label">Estamina <span class="tooltip-trigger" data-tooltip="Total = (Tolerancia x 2) + 3 + Bonus Circulacao. Gasto: Enter aplica (limitado). Recuperar: Enter aplica (vazio = Atletismo x 0.5).">?</span></label>
+          <div class="recurso-display">
+            <div class="recurso-celula">
+              <span class="recurso-rotulo">Total</span>
+              <span class="recurso-valor" id="estaminaTotal">3</span>
+            </div>
+            <div class="recurso-celula recurso-celula--destaque">
+              <span class="recurso-rotulo">Atual</span>
+              <span class="recurso-valor recurso-valor--estamina" id="estaminaAtualDisplay">3</span>
+            </div>
+          </div>
+          <div class="campo-grupo">
+            <label class="campo-label campo-label--sm">Gasto <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Enter aplica. Limitado por max(1, Atletismo x 0.2 + Tolerancia x 0.3).">?</span></label>
+            <input type="number" id="estaminaGasto" class="campo-input campo-input--centro campo-input--acao campo-input--acao-dano" placeholder="Enter..." min="0">
+          </div>
+          <div class="campo-grupo">
+            <label class="campo-label campo-label--sm">Recuperar <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Enter aplica. Vazio = Atletismo x 0.5.">?</span></label>
+            <input type="number" id="estaminaRecuperar" class="campo-input campo-input--centro campo-input--acao campo-input--acao-cura" placeholder="Enter...">
+          </div>
+        </div>
+
+        <!-- RACIOCINIO -->
+        <div class="campo-bloco">
+          <label class="campo-label">Raciocinio <span class="tooltip-trigger" data-tooltip="Total = 5 + (Concentracao x 2.5) + (Analise x 0.5) + (Foco x 0.5). Recuperar vazio = Concentracao x 2.">?</span></label>
+          <div class="recurso-display">
+            <div class="recurso-celula">
+              <span class="recurso-rotulo">Total</span>
+              <span class="recurso-valor" id="racTotal">5</span>
+            </div>
+            <div class="recurso-celula recurso-celula--destaque">
+              <span class="recurso-rotulo">Atual</span>
+              <span class="recurso-valor recurso-valor--rac" id="racAtualDisplay">5</span>
+            </div>
+          </div>
+          <div class="campo-grupo">
+            <label class="campo-label campo-label--sm">Gasto <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Enter aplica e limpa.">?</span></label>
+            <input type="number" id="racGasto" class="campo-input campo-input--centro campo-input--acao campo-input--acao-dano" placeholder="Enter..." min="0">
+          </div>
+          <div class="campo-grupo">
+            <label class="campo-label campo-label--sm">Recuperar <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Enter aplica. Vazio = Concentracao x 2.">?</span></label>
+            <input type="number" id="racRecuperar" class="campo-input campo-input--centro campo-input--acao campo-input--acao-cura" placeholder="Enter...">
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== COMBATE ============================== -->
+  <section class="ficha-painel" data-painel="combate">
+    <div class="painel-moldura">
+      <div class="moldura-canto moldura-canto--tl"></div>
+      <div class="moldura-canto moldura-canto--tr"></div>
+      <div class="moldura-canto moldura-canto--bl"></div>
+      <div class="moldura-canto moldura-canto--br"></div>
+
+      <header class="painel-cabecalho">
+        <div class="cabecalho-ornamento"></div>
+        <h2 class="painel-titulo">Combate</h2>
+        <p class="painel-subtitulo">Valores Calculados</p>
+        <div class="cabecalho-ornamento"></div>
+      </header>
+      <div class="divider-golden"></div>
+
+      <div class="campos-linha">
+        <div class="campos-coluna">
+          <div class="campo-grupo"><label class="campo-label campo-label--sm">Dano Fisico <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Forca x 1.5 + Atletismo x 0.4 + Tolerancia x 0.7 + Prontidao x 0.4">?</span></label><input type="number" id="danoFisico" class="campo-input campo-input--centro campo-input--readonly" value="0" readonly></div>
+          <div class="campo-grupo"><label class="campo-label campo-label--sm">Dano Magico <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Integracao x 1.5 + Foco x 0.5 + Canalizacao x 0.5">?</span></label><input type="number" id="danoMagico" class="campo-input campo-input--centro campo-input--readonly" value="0" readonly></div>
+          <div class="campo-grupo"><label class="campo-label campo-label--sm">Deslocamento <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="2 + Atletismo x 1.5">?</span></label><input type="number" id="deslocamento" class="campo-input campo-input--centro campo-input--readonly" value="2" readonly></div>
+          <div class="campo-grupo"><label class="campo-label campo-label--sm">Agilidade Combate <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Atletismo + Prontidao x 1.5 + Foco x 0.5 + Agilidade x 1.5">?</span></label><input type="number" id="agilidadeCombate" class="campo-input campo-input--centro campo-input--readonly" value="0" readonly></div>
+        </div>
+        <div class="campos-coluna">
+          <div class="campo-grupo"><label class="campo-label campo-label--sm">Vel. Magica <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Canalizacao x 1.5 + Integracao + Foco x 0.5 + Sensibilidade">?</span></label><input type="number" id="velocidadeMagica" class="campo-input campo-input--centro campo-input--readonly" value="0" readonly></div>
+          <div class="campo-grupo"><label class="campo-label campo-label--sm">Dens. Magica <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Ancoragem x 1.5 + Integracao x 0.5 + Concentracao">?</span></label><input type="number" id="densidadeMagica" class="campo-input campo-input--centro campo-input--readonly" value="0" readonly></div>
+          <div class="campo-grupo"><label class="campo-label campo-label--sm">Desl. Magia <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="(Canalizacao x 2.5) + 5">?</span></label><input type="number" id="deslocamentoMagia" class="campo-input campo-input--centro campo-input--readonly" value="5" readonly></div>
+          <div class="campo-grupo"><label class="campo-label campo-label--sm">Dano Arma <span class="tooltip-trigger tooltip-trigger--sm" data-tooltip="Dano Base + Manualidade x 3">?</span></label><input type="number" id="danoArmaTotal" class="campo-input campo-input--centro campo-input--readonly" value="0" readonly></div>
+        </div>
+      </div>
+
+      <div class="divider-golden"></div>
+
+      <div class="campo-grupo"><label class="campo-label campo-label--sm">Arma</label></div>
+      <div class="campo-linha">
+        <div class="campo-grupo campo-grupo--terco">
+          <select id="tipoArma" class="campo-select" data-campo="tipoArma">
+            <option value="">Tipo</option>
+            <option value="Curta">Curta</option>
+            <option value="Media">Media</option>
+            <option value="Longa">Longa</option>
+            <option value="Magica">Magica</option>
+          </select>
+        </div>
+        <div class="campo-grupo campo-grupo--terco">
+          <input type="text" id="nomeArma" class="campo-input campo-input--centro" placeholder="Nome" data-campo="nomeArma" maxlength="40">
+        </div>
+        <div class="campo-grupo campo-grupo--terco">
+          <input type="number" id="danoArma" class="campo-input campo-input--centro" placeholder="Dano" value="0" min="0" data-campo="danoArma">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== MAGIA ============================== -->
+  <section class="ficha-painel" data-painel="magia">
+    <div class="painel-moldura">
+      <div class="moldura-canto moldura-canto--tl"></div>
+      <div class="moldura-canto moldura-canto--tr"></div>
+      <div class="moldura-canto moldura-canto--bl"></div>
+      <div class="moldura-canto moldura-canto--br"></div>
+
+      <header class="painel-cabecalho">
+        <div class="cabecalho-ornamento"></div>
+        <h2 class="painel-titulo">Magia</h2>
+        <p class="painel-subtitulo">Circulacao & Alcance</p>
+        <div class="cabecalho-ornamento"></div>
+      </header>
+      <div class="divider-golden"></div>
+
+      <div class="campo-grupo"><label class="campo-label">Circulacao Magica <span class="tooltip-trigger" data-tooltip="4 quadrantes. X = Estamina (+2 inferior, +1 superior). O = Mana (+2 se par horizontal). Q = Vida (+2 se par vertical).">?</span></label></div>
+
+      <div class="circ-grade">
+        <div class="circ-quadrante">
+          <span class="circ-nome">Sup. Esq.</span>
+          <select id="quadSE" class="campo-select campo-select--mini" data-campo="quadSE"><option value="">-</option><option value="X">X (Agilidade)</option><option value="O">O (Flexibilidade)</option><option value="Q">Quadrado (Resistencia)</option></select>
+        </div>
+        <div class="circ-quadrante">
+          <span class="circ-nome">Sup. Dir.</span>
+          <select id="quadSD" class="campo-select campo-select--mini" data-campo="quadSD"><option value="">-</option><option value="X">X (Agilidade)</option><option value="O">O (Flexibilidade)</option><option value="Q">Quadrado (Resistencia)</option></select>
+        </div>
+        <div class="circ-quadrante">
+          <span class="circ-nome">Inf. Esq.</span>
+          <select id="quadIE" class="campo-select campo-select--mini" data-campo="quadIE"><option value="">-</option><option value="X">X (Agilidade)</option><option value="O">O (Flexibilidade)</option><option value="Q">Quadrado (Resistencia)</option></select>
+        </div>
+        <div class="circ-quadrante">
+          <span class="circ-nome">Inf. Dir.</span>
+          <select id="quadID" class="campo-select campo-select--mini" data-campo="quadID"><option value="">-</option><option value="X">X (Agilidade)</option><option value="O">O (Flexibilidade)</option><option value="Q">Quadrado (Resistencia)</option></select>
+        </div>
+      </div>
+
+      <div class="campo-saida-bloco">
+        <div class="saida-item"><span class="saida-rotulo">B. Vida</span><span class="saida-valor" id="bonusVida">0</span></div>
+        <div class="saida-item"><span class="saida-rotulo">B. Mana</span><span class="saida-valor" id="bonusMana">0</span></div>
+        <div class="saida-item"><span class="saida-rotulo">B. Estamina</span><span class="saida-valor" id="bonusEstamina">0</span></div>
+      </div>
+
+      <div class="divider-golden"></div>
+
+      <div class="campo-grupo"><label class="campo-label">Alcance <span class="tooltip-trigger" data-tooltip="Raio = (Foco x 2.5) + (Sensibilidade x 1.7) + (Canalizacao x 2.8). Area = PI x Raio ao quadrado.">?</span></label></div>
+
+      <div class="campos-linha">
+        <div class="campos-coluna">
+          <div class="campo-grupo"><label class="campo-label campo-label--sm">Raio Circular</label><input type="number" id="raioCircular" class="campo-input campo-input--centro campo-input--readonly" value="0" readonly></div>
+          <div class="campo-grupo"><label class="campo-label campo-label--sm">Area Circular</label><input type="number" id="areaCircular" class="campo-input campo-input--centro campo-input--readonly" value="0" readonly></div>
+        </div>
+        <div class="campos-coluna">
+          <div class="campo-grupo">
+            <label class="campo-label campo-label--sm">Angulo</label>
+            <select id="anguloDirecional" class="campo-select" data-campo="anguloDirecional">
+              <option value="180">180 graus</option>
+              <option value="120">120 graus</option>
+              <option value="90" selected>90 graus</option>
+              <option value="60">60 graus</option>
+              <option value="45">45 graus</option>
+              <option value="30">30 graus</option>
+              <option value="15">15 graus</option>
+              <option value="0">0 graus (reta)</option>
+            </select>
+          </div>
+          <div class="campo-grupo"><label class="campo-label campo-label--sm">Largura (reta)</label><input type="number" id="larguraReta" class="campo-input campo-input--centro" value="1" min="1" data-campo="larguraReta"></div>
+          <div class="campo-grupo"><label class="campo-label campo-label--sm">Alc. Direcional</label><input type="number" id="alcanceDirecional" class="campo-input campo-input--centro campo-input--readonly" value="0" readonly></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== INVENTARIO ============================== -->
+  <section class="ficha-painel" data-painel="inventario">
+    <div class="painel-moldura">
+      <div class="moldura-canto moldura-canto--tl"></div>
+      <div class="moldura-canto moldura-canto--tr"></div>
+      <div class="moldura-canto moldura-canto--bl"></div>
+      <div class="moldura-canto moldura-canto--br"></div>
+
+      <header class="painel-cabecalho">
+        <div class="cabecalho-ornamento"></div>
+        <h2 class="painel-titulo">Inventario</h2>
+        <p class="painel-subtitulo">Bolsa & Equipamentos</p>
+        <div class="cabecalho-ornamento"></div>
+      </header>
+      <div class="divider-golden"></div>
+
+      <div class="campo-grupo">
+        <label class="campo-label">Bolsa <span class="tooltip-trigger" data-tooltip="Liste os itens que o personagem carrega.">?</span></label>
+        <textarea id="bolsa" class="campo-textarea" placeholder="Itens da bolsa..." rows="10" data-campo="bolsa"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- RODAPE -->
+  <footer class="ficha-rodape">
+    <button class="ficha-acao-btn ficha-acao-btn--salvar" id="btnSalvar">Salvar Ficha</button>
+    <button class="ficha-acao-btn ficha-acao-btn--voltar" id="btnVoltarFichas">Voltar</button>
+  </footer>
+
+  <div class="tooltip-flutuante" id="tooltipFlutuante" role="tooltip" aria-hidden="true">
+    <div class="tooltip-conteudo" id="tooltipConteudo"></div>
+    <div class="tooltip-seta"></div>
+  </div>
+
+</div>
+
+<script src="../../db.js"></script>
+<script src="ficha.js"></script>
+</body>
+</html>
