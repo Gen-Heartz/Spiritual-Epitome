@@ -1,0 +1,177 @@
+:root {
+  /* === Paleta Original Spiritual-Epitome (Grimório do Mestre) === */
+  --font-titulo2: 'Cinzel Decorative', 'Cinzel', Georgia, serif;
+  --font-titulo1: 'Cinzel', Georgia, serif;
+  --font-subtitulo: 'Philosopher', Georgia, serif;
+  --font-normal: 'Crimson Text', Georgia, serif;
+  --font-medieval: 'MedievalSharp', serif;
+
+  /* Dourado Real */
+  --color-dourado-50: #fdf8e8;
+  --color-dourado-100: #faefc5;
+  --color-dourado-200: #f4d880;
+  --color-dourado-300: #ecc050;
+  --color-dourado-400: #dca638;
+  --color-dourado-500: #c4891a;
+  --color-dourado-600: #9e6b14;
+  --color-dourado-700: #7a5012;
+  --color-dourado-800: #5c3c10;
+  --color-dourado-900: #3f2a0e;
+
+  /* Terra */
+  --color-terra-50: #f5f3f0;
+  --color-terra-100: #e8e2db;
+  --color-terra-200: #cec3b5;
+  --color-terra-300: #ad9d88;
+  --color-terra-400: #8c7a64;
+  --color-terra-500: #6e5f4c;
+  --color-terra-600: #574b3c;
+  --color-terra-700: #453b2f;
+  --color-terra-800: #332c24;
+  --color-terra-900: #201c17;
+
+  /* Pergaminho */
+  --color-pergaminho-50: #fefdfb;
+  --color-pergaminho-100: #fbf7f0;
+  --color-pergaminho-200: #f3eadc;
+  --color-pergaminho-300: #e6d8c3;
+  --color-pergaminho-400: #d4c4a5;
+  --color-pergaminho-500: #bba98b;
+  --color-pergaminho-600: #9a8a6f;
+  --color-pergaminho-700: #786b55;
+  --color-pergaminho-800: #5d5240;
+  --color-pergaminho-900: #4a3f2e;
+
+  /* Metal */
+  --color-metal-50: #f8f8f8;
+  --color-metal-100: #e8e8e8;
+  --color-metal-200: #c8c8c8;
+  --color-metal-300: #9a9a9a;
+  --color-metal-400: #6c6c6c;
+  --color-metal-500: #484848;
+  --color-metal-600: #333333;
+  --color-metal-700: #202020;
+  --color-metal-800: #121212;
+  --color-metal-900: #080808;
+
+  /* Vermelho Dragão */
+  --color-vermelho-400: #e04545;
+  --color-vermelho-500: #c53030;
+  --color-vermelho-600: #9b2222;
+  --color-vermelho-700: #751919;
+
+  /* Azul Arcano */
+  --color-azul-300: #7580f0;
+  --color-azul-400: #5660ea;
+  --color-azul-500: #3b47e0;
+  --color-azul-600: #2a34b8;
+  --color-azul-700: #1e2690;
+
+  /* === Tokens Harmonizados da Aplicação (Sóbrios, sem exagero) === */
+  --bg-void: #0e0c0a;
+  --bg-surface: #171411;
+  --bg-panel: #1e1915;
+  --bg-elevated: #28221c;
+  --bg-hover: #352d25;
+  --bg-input: #13100d;
+
+  --border-subtle: rgba(187, 169, 139, 0.16);
+  --border-strong: rgba(196, 137, 26, 0.44);
+  --border-gold: #c4891a;
+
+  --gold-primary: #c4891a;
+  --gold-bright: #ecc050;
+  --gold-dim: rgba(196, 137, 26, 0.16);
+
+  --text-primary: #f3eadc;
+  --text-secondary: #bba98b;
+  --text-muted: #8c7a64;
+
+  --zone-red: #e04545;
+  --zone-orange: #f97316;
+  --zone-yellow: #eab308;
+
+  --accent-move: #5660ea;
+  --accent-hp: #22c55e;
+  --accent-danger: #e04545;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  --shadow-panel: 0 10px 30px rgba(0, 0, 0, 0.6);
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Crimson Text', Georgia, 'Times New Roman', serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-void);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+input,
+textarea,
+select {
+  user-select: text;
+}
+
+/* Utilitários clássicos do Grimório */
+.divisor-dourado {
+  border: none;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-dourado-700) 20%,
+    var(--color-dourado-400) 50%,
+    var(--color-dourado-700) 80%,
+    transparent
+  );
+  opacity: 0.65;
+}
+
+/* Scrollbars discretas em tom Terra/Dourado */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(14, 12, 10, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(187, 169, 139, 0.24);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(196, 137, 26, 0.55);
+}

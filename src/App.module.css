@@ -1,0 +1,48 @@
+.appShell {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-void);
+}
+
+.workspace {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+.loadingScreen {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--bg-void);
+  color: var(--gold-bright);
+  font-family: var(--font-titulo1);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.toast {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(170deg, rgba(32, 28, 23, 0.97), rgba(43, 36, 29, 0.96));
+  border: 1px solid var(--gold-primary);
+  color: var(--gold-bright);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.72);
+  z-index: 250;
+  pointer-events: none;
+}

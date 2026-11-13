@@ -1,0 +1,767 @@
+.pageWrapper {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px 14px 36px;
+  background-color: var(--color-metal-800);
+  background-image: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(196, 137, 26, 0.05) 0%,
+    transparent 65%
+  );
+}
+
+.compactWrapper {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 12px 12px 24px;
+}
+
+.container {
+  max-width: 880px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Abas superiores */
+.tabsNav {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.tabBtn {
+  padding: 9px 6px;
+  font-family: var(--font-titulo1);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--color-pergaminho-400);
+  background: rgba(32, 28, 23, 0.85);
+  border: 1px solid rgba(196, 137, 26, 0.28);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabBtn:hover {
+  color: var(--color-dourado-200);
+  border-color: var(--color-dourado-500);
+}
+
+.tabBtnActive {
+  color: var(--color-dourado-200);
+  background: linear-gradient(
+    180deg,
+    rgba(122, 80, 18, 0.45),
+    rgba(51, 44, 36, 0.9)
+  );
+  border-color: var(--color-dourado-400);
+  box-shadow: inset 0 1px 0 rgba(244, 216, 128, 0.15);
+}
+
+/* Moldura do painel */
+.panelFrame {
+  position: relative;
+  padding: 26px 24px 22px;
+  background: linear-gradient(
+    168deg,
+    rgba(32, 28, 23, 0.95),
+    rgba(43, 36, 29, 0.9)
+  );
+  border: 1.5px solid var(--color-dourado-600);
+  border-radius: 6px;
+  box-shadow: 0 6px 26px rgba(0, 0, 0, 0.5);
+}
+
+.corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: var(--color-dourado-400);
+  border-style: solid;
+}
+.cornerTl { top: 6px; left: 6px; border-width: 2px 0 0 2px; }
+.cornerTr { top: 6px; right: 6px; border-width: 2px 2px 0 0; }
+.cornerBl { bottom: 6px; left: 6px; border-width: 0 0 2px 2px; }
+.cornerBr { bottom: 6px; right: 6px; border-width: 0 2px 2px 0; }
+
+.panelHeader {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.panelTitle {
+  font-family: var(--font-titulo1);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--color-dourado-300);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin: 0 0 3px;
+}
+
+.panelSubtitle {
+  font-family: var(--font-subtitulo);
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--color-pergaminho-400);
+  margin: 0;
+}
+
+.divider {
+  margin: 14px 0;
+}
+
+/* Campos básicos */
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.row3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.row4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-titulo1);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--color-pergaminho-300);
+}
+
+.labelSm {
+  font-size: 10.5px;
+  color: var(--color-pergaminho-400);
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: 8px 10px;
+  background: rgba(16, 13, 10, 0.82);
+  border: 1px solid rgba(187, 169, 139, 0.24);
+  border-radius: 4px;
+  color: var(--color-pergaminho-100);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.16s ease;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--color-dourado-400);
+}
+
+.inputLarge {
+  font-family: var(--font-titulo1);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-dourado-200);
+}
+
+.inputCenter {
+  text-align: center;
+}
+
+.inputReadonly {
+  background: rgba(26, 22, 18, 0.65);
+  color: var(--color-dourado-300);
+  font-weight: 700;
+  border-color: rgba(196, 137, 26, 0.28);
+}
+
+.inputNegative {
+  color: #f87171 !important;
+  border-color: #e04545 !important;
+}
+
+.textarea {
+  resize: vertical;
+  font-family: var(--font-normal);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* Tooltip */
+.tooltipWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tooltipTrigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  font-family: var(--font-titulo1);
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--color-dourado-400);
+  background: rgba(92, 60, 16, 0.35);
+  border: 1px solid var(--color-dourado-700);
+  cursor: help;
+}
+
+.tooltipBubble {
+  position: absolute;
+  bottom: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 240px;
+  padding: 8px 11px;
+  background: #181410;
+  border: 1px solid var(--color-dourado-500);
+  border-radius: 4px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75);
+  color: var(--color-pergaminho-200);
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.4;
+  z-index: 60;
+  pointer-events: none;
+}
+
+/* Badge de Linhagem */
+.linhagemBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.linhagemBadge {
+  padding: 5px 16px;
+  border-radius: 999px;
+  font-family: var(--font-titulo1);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  border: 1px solid rgba(187, 169, 139, 0.3);
+  color: var(--color-pergaminho-300);
+  background: rgba(18, 18, 18, 0.5);
+}
+
+.linhagem_pungente {
+  color: #fca5a5;
+  border-color: rgba(224, 69, 69, 0.6);
+  background: rgba(117, 25, 25, 0.32);
+}
+.linhagem_erudita {
+  color: #93c5fd;
+  border-color: rgba(86, 96, 234, 0.65);
+  background: rgba(30, 38, 144, 0.32);
+}
+.linhagem_agraco {
+  color: #fcd34d;
+  border-color: rgba(220, 166, 56, 0.65);
+  background: rgba(122, 80, 18, 0.35);
+}
+.linhagem_desperta {
+  color: #86efac;
+  border-color: rgba(34, 197, 94, 0.55);
+  background: rgba(20, 83, 45, 0.32);
+}
+.linhagem_espectro {
+  color: #d8b4fe;
+  border-color: rgba(168, 85, 247, 0.55);
+  background: rgba(88, 28, 135, 0.32);
+}
+
+/* Retrato/Emblema para o Tabuleiro */
+.avatarRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(18, 15, 12, 0.6);
+  border: 1px solid rgba(196, 137, 26, 0.22);
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+.emblemChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.emblemChip {
+  padding: 3px 9px;
+  font-size: 11px;
+  border-radius: 4px;
+  border: 1px solid rgba(187, 169, 139, 0.22);
+  background: rgba(32, 28, 23, 0.8);
+  color: var(--color-pergaminho-300);
+  cursor: pointer;
+}
+
+.emblemChipActive {
+  border-color: var(--color-dourado-400);
+  color: var(--color-dourado-200);
+  background: rgba(122, 80, 18, 0.45);
+}
+
+/* Matriz de Perícias */
+.triadsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.triadCard {
+  padding: 12px;
+  background: rgba(18, 15, 12, 0.62);
+  border: 1px solid rgba(196, 137, 26, 0.24);
+  border-radius: 5px;
+}
+
+.triadTitle {
+  font-family: var(--font-titulo1);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--color-dourado-300);
+  margin: 0 0 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(196, 137, 26, 0.2);
+}
+
+.periciaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 0;
+}
+
+.periciaInfo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.periciaName {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-pergaminho-200);
+}
+
+.periciaType {
+  font-size: 10.5px;
+  color: var(--color-pergaminho-600);
+  font-style: italic;
+}
+
+.periciaValues {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.periciaInput {
+  width: 50px;
+  padding: 4px 6px;
+  text-align: center;
+  background: rgba(12, 10, 8, 0.9);
+  border: 1px solid rgba(187, 169, 139, 0.25);
+  border-radius: 4px;
+  color: var(--color-pergaminho-100);
+  font-weight: 600;
+}
+
+.periciaMod {
+  min-width: 26px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-dourado-300);
+}
+
+/* Os 4 Campos (Recursos) */
+.camposGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.campoBloco {
+  padding: 14px;
+  background: rgba(18, 15, 12, 0.66);
+  border: 1px solid rgba(196, 137, 26, 0.25);
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recursoDisplay {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.recursoCelula {
+  padding: 8px;
+  border-radius: 4px;
+  background: rgba(12, 10, 8, 0.75);
+  border: 1px solid rgba(187, 169, 139, 0.16);
+  text-align: center;
+}
+
+.recursoCelulaDestaque {
+  border-color: rgba(196, 137, 26, 0.42);
+}
+
+.recursoRotulo {
+  display: block;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--color-pergaminho-500);
+}
+
+.recursoValor {
+  display: block;
+  font-family: var(--font-titulo1);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-pergaminho-100);
+  margin-top: 2px;
+}
+
+.valVida { color: #f87171; }
+.valMana { color: #93c5fd; }
+.valEstamina { color: #86efac; }
+.valRac { color: #fcd34d; }
+
+.smallBtnRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.smallActionBtn {
+  padding: 6px 8px;
+  font-family: var(--font-titulo1);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--color-pergaminho-200);
+  background: rgba(69, 59, 47, 0.55);
+  border: 1px solid rgba(196, 137, 26, 0.35);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.smallActionBtn:hover {
+  border-color: var(--color-dourado-400);
+  color: var(--color-dourado-200);
+}
+
+/* Popups de Slots de Mana */
+.slotsBox {
+  margin-top: 4px;
+  padding: 10px;
+  background: rgba(10, 9, 8, 0.92);
+  border: 1px solid var(--color-dourado-600);
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.slotLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.slotCostInput {
+  width: 60px;
+  text-align: center;
+}
+
+/* Circulação Mágica 2x2 */
+.circGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.circCell {
+  padding: 10px;
+  background: rgba(18, 15, 12, 0.65);
+  border: 1px solid rgba(196, 137, 26, 0.25);
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.circBonusRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 10px;
+  background: rgba(14, 12, 10, 0.72);
+  border: 1px solid rgba(196, 137, 26, 0.24);
+  border-radius: 5px;
+  text-align: center;
+}
+
+/* Zona de Armas na Mochila (Inventário) */
+.mochilaWeaponsBox {
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  background: rgba(16, 13, 10, 0.72);
+  border: 1px solid rgba(196, 137, 26, 0.35);
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mochilaWeaponsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mochilaPickerRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mochilaWeaponList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mochilaWeaponCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  background: rgba(26, 22, 17, 0.85);
+  border: 1px solid rgba(187, 169, 139, 0.22);
+  border-radius: 5px;
+  transition: all 0.16s ease;
+}
+
+.mochilaWeaponCardEquipped {
+  border-color: var(--color-dourado-400);
+  background: linear-gradient(
+    90deg,
+    rgba(92, 60, 16, 0.34),
+    rgba(32, 26, 20, 0.88)
+  );
+}
+
+.mochilaWeaponLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.mochilaWeaponName {
+  font-family: var(--font-titulo1);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-pergaminho-100);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mochilaWeaponMeta {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--color-pergaminho-400);
+  margin-top: 2px;
+}
+
+.mochilaWeaponAttacks {
+  font-family: var(--font-normal);
+  font-size: 12px;
+  font-style: italic;
+  color: var(--color-pergaminho-500);
+  margin-top: 2px;
+}
+
+.mochilaBadgePorte {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+  color: var(--color-dourado-200);
+  background: rgba(122, 80, 18, 0.35);
+  border: 1px solid rgba(196, 137, 26, 0.45);
+}
+
+.mochilaBadgeEquipped {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 99px;
+  color: var(--color-terra-900);
+  background: var(--color-dourado-300);
+}
+
+.mochilaActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.mochilaEquipBtn {
+  padding: 5px 10px;
+  font-family: var(--font-titulo1);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--color-dourado-200);
+  background: rgba(122, 80, 18, 0.4);
+  border: 1px solid rgba(196, 137, 26, 0.55);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.mochilaEquipBtn:hover {
+  border-color: var(--color-dourado-200);
+  background: rgba(158, 107, 20, 0.55);
+}
+
+.mochilaRemoveBtn {
+  padding: 5px 8px;
+  font-size: 11px;
+  color: var(--color-pergaminho-400);
+  background: rgba(20, 17, 14, 0.8);
+  border: 1px solid rgba(187, 169, 139, 0.22);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.mochilaRemoveBtn:hover {
+  color: #fca5a5;
+  border-color: var(--color-vermelho-400);
+}
+
+/* Rodapé de ações */
+.footerActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.btnPrimary {
+  padding: 9px 20px;
+  font-family: var(--font-titulo1);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--color-dourado-100);
+  background: linear-gradient(
+    180deg,
+    rgba(158, 107, 20, 0.65),
+    rgba(122, 80, 18, 0.65)
+  );
+  border: 1px solid var(--color-dourado-400);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btnPrimary:hover {
+  border-color: var(--color-dourado-200);
+}
+
+.btnSecondary {
+  padding: 9px 18px;
+  font-family: var(--font-titulo1);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--color-pergaminho-300);
+  background: rgba(32, 28, 23, 0.85);
+  border: 1px solid var(--color-terra-500);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btnSecondary:hover {
+  color: var(--color-dourado-200);
+  border-color: var(--color-dourado-500);
+}
+
+@media (max-width: 700px) {
+  .tabsNav {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .triadsGrid,
+  .camposGrid,
+  .row2,
+  .row4 {
+    grid-template-columns: 1fr;
+  }
+}

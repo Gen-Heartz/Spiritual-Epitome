@@ -1,0 +1,264 @@
+.canvasWrapper {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: radial-gradient(circle at center, #181410 0%, #0b0908 100%);
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: default;
+}
+
+.cursorGrab {
+  cursor: grabbing !important;
+}
+
+.cursorPointer {
+  cursor: pointer;
+}
+
+.cursorCrosshair {
+  cursor: crosshair;
+}
+
+/* Banner Contextual de Modo no Topo do Tabuleiro */
+.modeBanner {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: rgba(28, 23, 18, 0.94);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+  backdrop-filter: blur(8px);
+  z-index: 15;
+  pointer-events: auto;
+  white-space: nowrap;
+}
+
+.modeDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  box-shadow: 0 0 8px var(--gold-bright);
+}
+
+.modeMoveDot {
+  background: var(--accent-move);
+  box-shadow: 0 0 8px var(--accent-move);
+}
+
+.modeAttackDot {
+  background: var(--zone-red);
+  box-shadow: 0 0 8px var(--zone-red);
+}
+
+.modeText {
+  font-size: 12.5px;
+  color: var(--text-primary);
+}
+
+.modeHint {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.bannerBtn {
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.bannerBtn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+.bannerBtnPrimary {
+  background: rgba(201, 166, 92, 0.22);
+  border-color: var(--gold-primary);
+  color: var(--gold-bright);
+  font-weight: 600;
+}
+
+.bannerBtnPrimary:hover {
+  background: rgba(201, 166, 92, 0.35);
+}
+
+/* Último ataque resolvido — marcação persistente no grid */
+.lastAttackHud {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 28px);
+  padding: 6px 8px 6px 12px;
+  background: rgba(26, 18, 20, 0.92);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+  backdrop-filter: blur(8px);
+  z-index: 14;
+  transition: top 0.18s ease;
+}
+
+.lastAttackDot {
+  width: 9px;
+  height: 9px;
+  min-width: 9px;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  background: var(--zone-red, #ef4444);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+}
+
+.lastAttackText {
+  font-size: 12.5px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lastAttackMeta {
+  color: var(--text-secondary);
+  font-size: 11.5px;
+}
+
+.lastAttackClearBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.lastAttackClearBtn:hover {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.55);
+}
+
+/* Legenda de Zonas de Impacto (Parte 11.4) */
+.legendContainer {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  background: rgba(28, 23, 18, 0.93);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+  backdrop-filter: blur(6px);
+  z-index: 12;
+  max-width: 300px;
+  overflow: hidden;
+}
+
+.legendHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 11px;
+  cursor: pointer;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--gold-bright);
+  border-bottom: 1px solid transparent;
+}
+
+.legendHeaderOpen {
+  border-bottom-color: var(--border-subtle);
+}
+
+.legendBody {
+  padding: 9px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.zoneSwatch {
+  width: 12px;
+  height: 12px;
+  min-width: 12px;
+  border-radius: 3px;
+  margin-top: 2px;
+}
+
+.swatchRed {
+  background: rgba(239, 68, 68, 0.75);
+  border: 1px solid #fca5a5;
+}
+
+.swatchOrange {
+  background: rgba(249, 115, 22, 0.75);
+  border: 1px solid #fdba74;
+}
+
+.swatchYellow {
+  background: rgba(234, 179, 8, 0.75);
+  border: 1px solid #fde047;
+}
+
+.legendLabel {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.legendDesc {
+  color: var(--text-secondary);
+  display: block;
+}
+
+/* Coordenada e status no canto inferior direito */
+.coordsHud {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 11px;
+  border-radius: var(--radius-sm);
+  background: rgba(28, 23, 18, 0.9);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  pointer-events: none;
+  z-index: 12;
+}

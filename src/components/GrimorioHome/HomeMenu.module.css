@@ -1,0 +1,321 @@
+.screen {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 16px;
+  background-color: var(--color-metal-800);
+  background-image: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(196, 137, 26, 0.06) 0%,
+    transparent 65%
+  );
+}
+
+.frame {
+  position: relative;
+  max-width: 720px;
+  width: 100%;
+  padding: 42px 36px 30px;
+  background: linear-gradient(
+    168deg,
+    rgba(32, 28, 23, 0.94),
+    rgba(43, 36, 29, 0.88)
+  );
+  border: 1.5px solid var(--color-dourado-600);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(196, 137, 26, 0.25),
+    0 8px 32px rgba(0, 0, 0, 0.55);
+}
+
+.corner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-color: var(--color-dourado-400);
+  border-style: solid;
+  opacity: 0.85;
+}
+
+.cornerTl {
+  top: 7px;
+  left: 7px;
+  border-width: 2px 0 0 2px;
+}
+
+.cornerTr {
+  top: 7px;
+  right: 7px;
+  border-width: 2px 2px 0 0;
+}
+
+.cornerBl {
+  bottom: 7px;
+  left: 7px;
+  border-width: 0 0 2px 2px;
+}
+
+.cornerBr {
+  bottom: 7px;
+  right: 7px;
+  border-width: 0 2px 2px 0;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.ornament {
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-dourado-500);
+  font-size: 11px;
+  letter-spacing: 12px;
+  font-family: var(--font-medieval);
+  opacity: 0.55;
+}
+
+.title {
+  font-family: var(--font-titulo2);
+  font-size: clamp(20px, 4.5vw, 30px);
+  font-weight: 700;
+  color: var(--color-dourado-300);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  margin: 10px 0 6px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+  line-height: 1.2;
+}
+
+.subtitle {
+  font-family: var(--font-subtitulo);
+  font-size: 13px;
+  color: var(--color-pergaminho-400);
+  letter-spacing: 1.6px;
+  margin: 0 0 8px;
+  font-style: italic;
+}
+
+.divider {
+  margin: 16px 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  padding: 4px 0;
+}
+
+.cardBtn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 12px 16px;
+  min-height: 112px;
+  cursor: pointer;
+  background: rgba(69, 59, 47, 0.48);
+  border: 1px solid var(--color-dourado-700);
+  border-radius: 5px;
+  box-shadow:
+    inset 0 1px 0 rgba(244, 216, 128, 0.05),
+    0 2px 6px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+.cardBtn:hover {
+  border-color: var(--color-dourado-400);
+  background: rgba(69, 59, 47, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(244, 216, 128, 0.09),
+    0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.cardBtn:active {
+  transform: translateY(1px);
+}
+
+.cardBtnFeatured {
+  border-color: rgba(220, 166, 56, 0.65);
+  background: linear-gradient(
+    180deg,
+    rgba(92, 60, 16, 0.34),
+    rgba(69, 59, 47, 0.56)
+  );
+}
+
+.hotkey {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  color: var(--color-pergaminho-600);
+  opacity: 0.75;
+}
+
+.badgeCount {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-dourado-200);
+  background: rgba(122, 80, 18, 0.55);
+  border: 1px solid rgba(196, 137, 26, 0.45);
+}
+
+.icon {
+  display: block;
+  font-size: 24px;
+  color: var(--color-dourado-400);
+  margin-bottom: 8px;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.cardBtn:hover .icon {
+  color: var(--color-dourado-200);
+}
+
+.label {
+  display: block;
+  font-family: var(--font-titulo1);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-pergaminho-200);
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  transition: color 0.2s ease;
+}
+
+.cardBtn:hover .label {
+  color: var(--color-dourado-200);
+}
+
+.desc {
+  display: block;
+  font-family: var(--font-normal);
+  font-size: 12px;
+  font-style: italic;
+  color: var(--color-pergaminho-500);
+  margin-top: 4px;
+}
+
+.cardBtn:hover .desc {
+  color: var(--color-pergaminho-300);
+}
+
+.footer {
+  text-align: center;
+  padding-top: 4px;
+}
+
+.footerText {
+  font-family: var(--font-normal);
+  font-size: 13.5px;
+  font-style: italic;
+  color: var(--color-pergaminho-600);
+  letter-spacing: 0.8px;
+  margin: 0;
+}
+
+/* Modal de Sistema (Resumo das Regras Spiritual-Epitome + Tabuleiro) */
+.guideBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 8, 8, 0.78);
+  backdrop-filter: blur(4px);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.guideModal {
+  max-width: 680px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 26px 28px;
+  background: linear-gradient(168deg, #201c17, #28221c);
+  border: 1.5px solid var(--color-dourado-600);
+  border-radius: 6px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+}
+
+.guideTitle {
+  font-family: var(--font-titulo1);
+  font-size: 18px;
+  color: var(--color-dourado-300);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+}
+
+.guideSection {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  background: rgba(18, 18, 18, 0.45);
+  border: 1px solid rgba(196, 137, 26, 0.25);
+  border-radius: 4px;
+}
+
+.guideSection h4 {
+  font-family: var(--font-titulo1);
+  font-size: 13px;
+  color: var(--color-dourado-400);
+  margin: 0 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.guideSection p {
+  font-family: var(--font-normal);
+  font-size: 14.5px;
+  color: var(--color-pergaminho-300);
+  margin: 4px 0;
+  line-height: 1.5;
+}
+
+.guideCloseBtn {
+  margin-top: 8px;
+  padding: 8px 20px;
+  font-family: var(--font-titulo1);
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--color-dourado-200);
+  background: rgba(122, 80, 18, 0.42);
+  border: 1px solid var(--color-dourado-500);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .frame {
+    padding: 30px 18px 22px;
+  }
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}

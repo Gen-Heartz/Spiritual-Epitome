@@ -1,0 +1,433 @@
+.screen {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px 16px 32px;
+  background-color: var(--color-metal-800);
+  background-image: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(196, 137, 26, 0.05) 0%,
+    transparent 65%
+  );
+}
+
+.container {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+  background: linear-gradient(
+    168deg,
+    rgba(32, 28, 23, 0.96),
+    rgba(43, 36, 29, 0.9)
+  );
+  border: 1px solid var(--color-dourado-600);
+  border-radius: 6px;
+}
+
+.titleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title {
+  font-family: var(--font-titulo2);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--color-dourado-300);
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.subtitle {
+  font-family: var(--font-normal);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--color-pergaminho-400);
+  margin: 0;
+}
+
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.panel {
+  position: relative;
+  padding: 18px;
+  background: linear-gradient(
+    168deg,
+    rgba(30, 26, 21, 0.95),
+    rgba(40, 34, 27, 0.9)
+  );
+  border: 1px solid rgba(196, 137, 26, 0.42);
+  border-radius: 6px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.42);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.sectionTitle {
+  font-family: var(--font-titulo1);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--color-dourado-300);
+  margin: 0;
+}
+
+.searchInput,
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(187, 169, 139, 0.26);
+  background: rgba(15, 13, 11, 0.82);
+  color: var(--color-pergaminho-100);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.searchInput:focus,
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--color-dourado-400);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 64px;
+}
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 8px 0 12px;
+}
+
+.filterChip {
+  padding: 4px 9px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  border-radius: 4px;
+  border: 1px solid rgba(187, 169, 139, 0.24);
+  background: rgba(20, 17, 14, 0.72);
+  color: var(--color-pergaminho-400);
+  cursor: pointer;
+}
+
+.filterChip:hover {
+  border-color: var(--color-dourado-500);
+  color: var(--color-pergaminho-100);
+}
+
+.filterChipActive {
+  border-color: var(--color-dourado-400);
+  background: rgba(122, 80, 18, 0.44);
+  color: var(--color-dourado-200);
+  font-weight: 600;
+}
+
+.weaponList {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 3px;
+}
+
+.weaponItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 5px;
+  border: 1px solid rgba(187, 169, 139, 0.18);
+  background: rgba(20, 17, 14, 0.72);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.weaponItem:hover {
+  border-color: var(--color-dourado-500);
+  background: rgba(42, 35, 27, 0.82);
+}
+
+.weaponItemActive {
+  border-color: var(--color-dourado-300);
+  background: rgba(92, 60, 16, 0.36);
+}
+
+.weaponItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  flex: 1;
+}
+
+.weaponItemName {
+  font-family: var(--font-titulo1);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-pergaminho-100);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.weaponItemMeta {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--color-pergaminho-500);
+  margin-top: 2px;
+}
+
+.porteBadge {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: var(--color-dourado-200);
+  background: rgba(122, 80, 18, 0.38);
+  border: 1px solid rgba(196, 137, 26, 0.42);
+  flex-shrink: 0;
+}
+
+.editorStack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.iconBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(196, 137, 26, 0.22);
+}
+
+.iconLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.formGrid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.formGrid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label {
+  font-family: var(--font-titulo1);
+  font-size: 11px;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--color-pergaminho-300);
+}
+
+.hint {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--color-pergaminho-500);
+}
+
+.attacksList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.attackCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 13px;
+  border-radius: 5px;
+  background: rgba(18, 15, 12, 0.78);
+  border: 1px solid rgba(187, 169, 139, 0.22);
+}
+
+.attackTitle {
+  font-family: var(--font-titulo1);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-pergaminho-100);
+}
+
+.attackSub {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--color-pergaminho-400);
+  margin-top: 2px;
+}
+
+.attackDesc {
+  font-family: var(--font-normal);
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--color-pergaminho-500);
+  margin-top: 2px;
+}
+
+.attackRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.dmgBadge {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: var(--color-dourado-200);
+  background: rgba(122, 80, 18, 0.35);
+  border: 1px solid rgba(196, 137, 26, 0.45);
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-family: var(--font-titulo1);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--color-dourado-100);
+  background: linear-gradient(
+    180deg,
+    rgba(158, 107, 20, 0.62),
+    rgba(122, 80, 18, 0.62)
+  );
+  border: 1px solid var(--color-dourado-400);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btnPrimary:hover {
+  border-color: var(--color-dourado-200);
+}
+
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 12px;
+  font-family: var(--font-titulo1);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--color-pergaminho-300);
+  background: rgba(28, 24, 19, 0.85);
+  border: 1px solid var(--color-terra-500);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btnSecondary:hover {
+  color: var(--color-dourado-200);
+  border-color: var(--color-dourado-500);
+}
+
+.btnDanger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 11px;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: #fca5a5;
+  background: rgba(127, 29, 29, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btnDanger:hover {
+  background: rgba(153, 27, 27, 0.42);
+}
+
+.emptyState {
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--color-pergaminho-400);
+  font-family: var(--font-normal);
+  font-style: italic;
+  font-size: 14px;
+}
+
+@media (max-width: 860px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+  .formGrid2,
+  .formGrid3 {
+    grid-template-columns: 1fr;
+  }
+}
