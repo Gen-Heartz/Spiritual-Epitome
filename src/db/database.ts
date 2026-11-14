@@ -13,6 +13,12 @@ import {
   WeaponTemplateRecord,
 } from '../types';
 import { createDefaultArsenalCatalog } from '../data/presets';
+import { createDefaultBestiaryCatalog } from '../data/bestiaryPresets';
+import {
+  BestiaryCatalog,
+  BestiaryMonster,
+} from '../bestiary/bestiaryTypes';
+import { normalizarMonstro } from '../bestiary/bestiaryEngine';
 import { EpitomeFicha } from '../epitome/epitomeTypes';
 import {
   DEFAULT_SAMPLE_FICHAS,
@@ -233,6 +239,44 @@ export async function loadOrSeedArsenalCatalog(
   return seeded;
 }
 
+// === Bestiário Global Independente (Glossário -> Monstros) ===
+
+export const BESTIARIO_GLOSSARIO_ID = 'bestiario_monstros_v1';
+
+export async function saveBestiaryCatalog(
+  catalog: BestiaryCatalog
+): Promise<void> {
+  const clean: Record<string, BestiaryMonster> = {};
+  for (const [id, mon] of Object.entries(catalog.monsters || {})) {
+    if (!mon) continue;
+    clean[id] = mon;
+  }
+
+  await db.glossario.put({
+    id: BESTIARIO_GLOSSARIO_ID,
+    termo: 'Bestiário de Monstros',
+    monsters: clean,
+    updatedAt: Date.now(),
+  });
+}
+
+export async function loadOrSeedBestiaryCatalog(): Promise<BestiaryCatalog> {
+  const rec = await db.glossario.get(BESTIARIO_GLOSSARIO_ID);
+  if (rec && rec.monsters && typeof rec.monsters === 'object') {
+    const monsters: Record<string, BestiaryMonster> = {};
+    for (const [id, raw] of Object.entries(
+      rec.monsters as Record<string, BestiaryMonster>
+    )) {
+      monsters[id] = normalizarMonstro(raw, id);
+    }
+    return { monsters };
+  }
+
+  const seeded = createDefaultBestiaryCatalog();
+  await saveBestiaryCatalog(seeded);
+  return seeded;
+}
+
 // === Modelos Reutilizáveis ===
 
 export async function saveCharacterTemplate(
@@ -327,6 +371,14 @@ export async function buildExportedMatchPayload(
     }
   }
 
+  const bestiaryRec = await db.glossario.get(BESTIARIO_GLOSSARIO_ID);
+  const bestiaryMonsters = bestiaryRec?.monsters
+    ? Object.values(bestiaryRec.monsters as Record<string, BestiaryMonster>)
+    : [];
+  for (const mon of bestiaryMonsters) {
+    if (mon?.imagemId) referencedImageIds.add(mon.imagemId);
+  }
+
   const images: ExportedImage[] = [];
   for (const imgId of referencedImageIds) {
     const rec = await db.images.get(imgId);
@@ -361,6 +413,7 @@ export async function buildExportedMatchPayload(
           cells: state.lastAttack.cells.map((c) => ({ ...c })),
         }
       : null,
+    bestiary: bestiaryMonsters,
   };
 }
 
@@ -562,6 +615,16 @@ export async function importGrimorioOuPartidaJSON(jsonString: string): Promise<{
     const state = await parseMatchPayloadToAppState(
       parsed as ExportedMatchJSON
     );
+    // Bestiário embutido no ficheiro de partida (Glossário -> Monstros)
+    if (Array.isArray(parsed.bestiary) && parsed.bestiary.length) {
+      const atual = await loadOrSeedBestiaryCatalog();
+      const merged = { ...atual.monsters };
+      for (const raw of parsed.bestiary) {
+        const mon = normalizarMonstro(raw);
+        merged[mon.id] = mon;
+      }
+      await saveBestiaryCatalog({ monsters: merged });
+    }
     return { fichasImportadas: 0, partidaImportada: state };
   }
 

@@ -266,6 +266,8 @@ export interface ExportedMatchJSON {
   combat: CombatSession;
   settings?: SystemSettings;
   lastAttack?: LastResolvedAttack | null;
+  /** Bestiário do Glossário (Glossário -> Monstros), quando incluído na exportação */
+  bestiary?: import('../bestiary/bestiaryTypes').BestiaryMonster[];
 }
 
 export interface SavedMatchRecord {

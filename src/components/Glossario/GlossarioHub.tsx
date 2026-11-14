@@ -4,13 +4,16 @@ import styles from './GlossarioHub.module.css';
 
 export const GlossarioHub: React.FC = () => {
   const arsenalCatalog = useGameStore((s) => s.arsenalCatalog);
+  const bestiaryCatalog = useGameStore((s) => s.bestiaryCatalog);
   const setActiveScreen = useGameStore((s) => s.setActiveScreen);
   const refreshArsenal = useGameStore((s) => s.refreshArsenal);
+  const refreshBestiary = useGameStore((s) => s.refreshBestiary);
   const showToast = useGameStore((s) => s.showToast);
 
   useEffect(() => {
     refreshArsenal();
-  }, [refreshArsenal]);
+    refreshBestiary();
+  }, [refreshArsenal, refreshBestiary]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -25,7 +28,7 @@ export const GlossarioHub: React.FC = () => {
           setActiveScreen('glossario_armas');
           break;
         case '2':
-          showToast('Monstros — seção estruturada, conteúdo em breve.');
+          setActiveScreen('glossario_monstros');
           break;
         case '3':
           showToast('Plantas — seção estruturada, conteúdo em breve.');
@@ -40,6 +43,7 @@ export const GlossarioHub: React.FC = () => {
   }, [setActiveScreen, showToast]);
 
   const totalArmas = Object.keys(arsenalCatalog.weapons).length;
+  const totalMonstros = Object.keys(bestiaryCatalog.monsters).length;
 
   return (
     <div className={styles.screen}>
@@ -76,19 +80,19 @@ export const GlossarioHub: React.FC = () => {
             </span>
           </button>
 
-          {/* 2. Monstros */}
+          {/* 2. Monstros (Bestiário) */}
           <button
             type="button"
-            className={`${styles.cardBtn} ${styles.cardBtnStructure}`}
-            onClick={() =>
-              showToast('Monstros — seção estruturada, conteúdo em breve.')
-            }
+            className={`${styles.cardBtn} ${styles.cardBtnActive}`}
+            onClick={() => setActiveScreen('glossario_monstros')}
           >
-            <span className={styles.badgeSoon}>Em breve</span>
+            <span className={styles.badge}>{totalMonstros} monstros</span>
             <span className={styles.hotkey}>2</span>
             <span className={styles.icon}>&#9760;</span>
             <span className={styles.btnTitle}>Monstros</span>
-            <span className={styles.btnDesc}>Bestiário &amp; Criaturas</span>
+            <span className={styles.btnDesc}>
+              Bestiário, Pontos de Classificação &amp; Invocação
+            </span>
           </button>
 
           {/* 3. Plantas */}

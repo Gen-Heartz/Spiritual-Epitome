@@ -38,6 +38,8 @@ import {
   listFichas,
   loadOrSeedArsenalCatalog,
   saveArsenalCatalog,
+  loadOrSeedBestiaryCatalog,
+  saveBestiaryCatalog,
   saveCharacterTemplate,
   saveFicha,
   saveMatchRecord,
@@ -45,6 +47,12 @@ import {
   seedDefaultFichasIfEmpty,
   StorageEstimateInfo,
 } from '../db/database';
+import {
+  BestiaryCatalog,
+  BestiaryMonster,
+} from '../bestiary/bestiaryTypes';
+import { converterMonstroParaTabuleiro } from '../bestiary/bestiaryEngine';
+import { createDefaultBestiaryCatalog } from '../data/bestiaryPresets';
 import { initializeAllPresetEmblems } from '../utils/imageProcessor';
 import {
   createBlankMatchState,
@@ -56,6 +64,7 @@ export type AppScreen =
   | 'home'
   | 'glossario'
   | 'glossario_armas'
+  | 'glossario_monstros'
   | 'fichas'
   | 'ficha_editor'
   | 'ficha_jogar'
@@ -157,6 +166,8 @@ export interface GameStore {
 
   // Grimório, Glossário & Fichas (Spiritual-Epitome)
   arsenalCatalog: ArsenalCatalog;
+  /** Bestiário do Glossário (Glossário -> Monstros) */
+  bestiaryCatalog: BestiaryCatalog;
   fichasList: EpitomeFicha[];
   editingFichaId: string | null;
   playingFichaIds: string[];
@@ -212,6 +223,15 @@ export interface GameStore {
   setSystemGuideModalOpen: (open: boolean) => void;
   refreshFichas: () => Promise<void>;
   refreshArsenal: () => Promise<void>;
+
+  // Bestiário (Glossário -> Monstros)
+  refreshBestiary: () => Promise<void>;
+  upsertMonster: (monster: BestiaryMonster) => void;
+  duplicateMonster: (monsterId: string) => string | null;
+  deleteMonster: (monsterId: string) => void;
+  importBestiary: (monsters: BestiaryMonster[]) => Promise<number>;
+  summonMonsterOnBoard: (monsterId: string) => Promise<string | null>;
+
   saveFichaRecord: (
     ficha: EpitomeFicha,
     syncLinkedBoardChars?: boolean
@@ -380,6 +400,7 @@ export const useGameStore = create<GameStore>((set, get) => {
     appState: createSampleEncounterState(),
 
     arsenalCatalog: createDefaultArsenalCatalog(),
+    bestiaryCatalog: createDefaultBestiaryCatalog(),
     fichasList: [],
     editingFichaId: null,
     playingFichaIds: [],
@@ -477,6 +498,132 @@ export const useGameStore = create<GameStore>((set, get) => {
         attacks: { ...arsenal.attacks, ...prev.attacks },
       };
       set({ arsenalCatalog: arsenal, appState: mergedState });
+    },
+
+    // ===== Bestiário (Glossário -> Monstros) =====
+    refreshBestiary: async () => {
+      const bestiary = await loadOrSeedBestiaryCatalog();
+      set({ bestiaryCatalog: bestiary });
+    },
+
+    upsertMonster: (monster) => {
+      const prevBestiary = get().bestiaryCatalog;
+      const agora = Date.now();
+      const existente = prevBestiary.monsters[monster.id];
+      const normalizado: BestiaryMonster = {
+        ...monster,
+        criadoEm: existente ? existente.criadoEm : monster.criadoEm || agora,
+        atualizadoEm: agora,
+      };
+      const nextCatalog: BestiaryCatalog = {
+        monsters: {
+          ...prevBestiary.monsters,
+          [monster.id]: normalizado,
+        },
+      };
+      set({ bestiaryCatalog: nextCatalog });
+      saveBestiaryCatalog(nextCatalog).catch((e) =>
+        console.error('Erro ao salvar bestiário:', e)
+      );
+    },
+
+    duplicateMonster: (monsterId) => {
+      const prevBestiary = get().bestiaryCatalog;
+      const origem = prevBestiary.monsters[monsterId];
+      if (!origem) return null;
+
+      const agora = Date.now();
+      const novoId = `mon_${agora}_${Math.random().toString(36).slice(2, 7)}`;
+      const copia: BestiaryMonster = {
+        ...origem,
+        id: novoId,
+        nome: `${origem.nome} (Cópia)`,
+        criadoEm: agora,
+        atualizadoEm: agora,
+        habilidades: {
+          fisico: { ...origem.habilidades.fisico },
+          magico: { ...origem.habilidades.magico },
+          extras: { ...origem.habilidades.extras },
+        },
+        regioes: [...origem.regioes],
+        presas: [...origem.presas],
+        elementos: [...origem.elementos],
+        itensExtraiveis: origem.itensExtraiveis.map((i) => ({ ...i })),
+        ajustes: origem.ajustes ? { ...origem.ajustes } : undefined,
+      };
+
+      const nextCatalog: BestiaryCatalog = {
+        monsters: { ...prevBestiary.monsters, [novoId]: copia },
+      };
+      set({ bestiaryCatalog: nextCatalog });
+      saveBestiaryCatalog(nextCatalog).catch((e) =>
+        console.error('Erro ao salvar bestiário:', e)
+      );
+      return novoId;
+    },
+
+    deleteMonster: (monsterId) => {
+      const prevBestiary = get().bestiaryCatalog;
+      if (!prevBestiary.monsters[monsterId]) return;
+      const monsters = { ...prevBestiary.monsters };
+      delete monsters[monsterId];
+      const nextCatalog: BestiaryCatalog = { monsters };
+      set({ bestiaryCatalog: nextCatalog });
+      saveBestiaryCatalog(nextCatalog).catch((e) =>
+        console.error('Erro ao salvar bestiário:', e)
+      );
+    },
+
+    importBestiary: async (monsters) => {
+      const prevBestiary = get().bestiaryCatalog;
+      const merged = { ...prevBestiary.monsters };
+      let count = 0;
+      for (const mon of monsters) {
+        if (!mon || !mon.id) continue;
+        merged[mon.id] = mon;
+        count += 1;
+      }
+      const nextCatalog: BestiaryCatalog = { monsters: merged };
+      set({ bestiaryCatalog: nextCatalog });
+      await saveBestiaryCatalog(nextCatalog);
+      return count;
+    },
+
+    summonMonsterOnBoard: async (monsterId) => {
+      const monstro = get().bestiaryCatalog.monsters[monsterId];
+      if (!monstro) {
+        get().showToast('Monstro não encontrado no Bestiário.');
+        return null;
+      }
+
+      const prev = get().appState;
+      const bundle = converterMonstroParaTabuleiro(monstro);
+
+      const nextWeapons = { ...prev.weapons };
+      const nextAttacks = { ...prev.attacks };
+      for (const atk of bundle.attacks) nextAttacks[atk.id] = atk;
+      for (const wp of bundle.weapons) nextWeapons[wp.id] = wp;
+
+      const nextState: AppState = {
+        ...prev,
+        characters: {
+          ...prev.characters,
+          [bundle.character.id]: bundle.character,
+        },
+        weapons: nextWeapons,
+        attacks: nextAttacks,
+      };
+
+      set({ appState: nextState, selectedCharacterId: bundle.character.id });
+      persistCurrent(nextState);
+
+      const colocado = get().autoPlaceCharacter(bundle.character.id);
+      get().showToast(
+        colocado
+          ? `${monstro.nome} invocado (${bundle.perfil.faixaAmeaca}) — ${bundle.perfil.vida} PV, ${bundle.perfil.movimento} de movimento.`
+          : `${monstro.nome} adicionado à reserva (tabuleiro sem espaço livre).`
+      );
+      return bundle.character.id;
     },
 
     saveFichaRecord: async (ficha, syncLinkedBoardChars = true) => {
@@ -724,6 +871,7 @@ export const useGameStore = create<GameStore>((set, get) => {
       ]);
 
       const arsenal = await loadOrSeedArsenalCatalog(saved ? saved.state : null);
+      const bestiary = await loadOrSeedBestiaryCatalog();
 
       if (saved) {
         const baseNorm = normalizeAppState(saved.state);
@@ -741,6 +889,7 @@ export const useGameStore = create<GameStore>((set, get) => {
           activeMatchId: saved.id,
           appState: normalized,
           arsenalCatalog: arsenal,
+          bestiaryCatalog: bestiary,
           fichasList: fichas,
           selectedCharacterId: firstCharId,
           storageEstimate: est,
@@ -759,6 +908,7 @@ export const useGameStore = create<GameStore>((set, get) => {
           activeMatchId: defaultId,
           appState: sample,
           arsenalCatalog: arsenal,
+          bestiaryCatalog: bestiary,
           fichasList: fichas,
           selectedCharacterId: 'char_lyra',
           storageEstimate: est,
