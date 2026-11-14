@@ -26,6 +26,25 @@ import { DIRECTION_SHORT } from '../../engine/geometry';
 import { TokenAvatar } from '../common/TokenAvatar';
 import styles from './LeftSidebar.module.css';
 
+/** Rótulos legíveis para o Log (o `act.type` cru não aparece ao utilizador). */
+const ACTION_LABELS: Record<string, string> = {
+  MOVE: 'Movimento',
+  PLACE_CHARACTER: 'Posicionamento',
+  REMOVE_CHARACTER: 'Remoção',
+  DAMAGE: 'Dano',
+  HEAL: 'Cura',
+  SET_HP: 'Vida',
+  ATTACK_RESOLVE: 'Ataque',
+  TERRAIN_BATCH: 'Terreno',
+  TURN_CHANGE: 'Turno',
+};
+
+/**
+ * Ações que não aparecem no Log. A rotação do personagem segue o cursor e
+ * mudaria dezenas de vezes só a mover o mouse — não é uma jogada.
+ */
+const LOG_HIDDEN_TYPES = new Set(['ROTATE']);
+
 export const LeftSidebar: React.FC = () => {
   const appState = useGameStore((s) => s.appState);
   const selectedCharacterId = useGameStore((s) => s.selectedCharacterId);
@@ -66,6 +85,14 @@ export const LeftSidebar: React.FC = () => {
   const notInInitiative = allChars.filter(
     (c) => !appState.combat.turnOrder.includes(c.id)
   );
+
+  // Log sem as mudanças de direção (seguem o cursor) — só jogadas reais.
+  const logEntries = appState.history.past.filter(
+    (act) => !LOG_HIDDEN_TYPES.has(act.type)
+  );
+  const attackCount = logEntries.filter(
+    (act) => act.type === 'ATTACK_RESOLVE'
+  ).length;
 
   const handleInitDrop = (targetIdx: number) => {
     if (dragInitIdx === null || dragInitIdx === targetIdx) return;
@@ -494,17 +521,27 @@ export const LeftSidebar: React.FC = () => {
             </div>
 
             <div className={styles.scrollArea}>
-              <div className={styles.groupLabel}>Registro de Combate</div>
-              {appState.history.past.length === 0 ? (
+              <div className={styles.groupLabel}>
+                Registro de Combate
+                {attackCount > 0 ? ` • ${attackCount} ataque${attackCount > 1 ? 's' : ''}` : ''}
+              </div>
+              {logEntries.length === 0 ? (
                 <div className={styles.emptyHint}>
-                  Nenhuma ação registrada ainda nesta sessão. Movimentos, rotações, ataques e alterações de vida aparecerão aqui.
+                  Nenhuma ação registrada ainda nesta sessão. Ataques (com a
+                  direção), movimentos e alterações de vida aparecerão aqui — a
+                  orientação do personagem não é registrada.
                 </div>
               ) : (
-                [...appState.history.past].reverse().map((act) => (
-                  <div key={act.id} className={styles.historyItem}>
+                [...logEntries].reverse().map((act) => (
+                  <div
+                    key={act.id}
+                    className={`${styles.historyItem} ${
+                      act.type === 'ATTACK_RESOLVE' ? styles.historyItemAttack : ''
+                    }`}
+                  >
                     <div className={styles.historyTime}>
                       {new Date(act.timestamp).toLocaleTimeString('pt-BR')} •{' '}
-                      {act.type}
+                      {ACTION_LABELS[act.type] ?? act.type}
                     </div>
                     <div>{act.description}</div>
                   </div>

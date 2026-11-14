@@ -23,7 +23,7 @@ import {
 } from '../epitome/epitomeEngine';
 import {
   canPlaceCharacter,
-  DIRECTION_SHORT,
+  DIRECTION_LABELS,
   getDirectionalAnchorCell,
   GridPoint,
 } from '../engine/geometry';
@@ -66,20 +66,41 @@ function uid(prefix: string): string {
 }
 
 /** Compatibilidade com partidas guardadas antes da área persistente existir. */
+/**
+ * Ações de rotação geradas antigamente enchiam o Log com "girou para X" a cada
+ * movimento do mouse. Removem-se do histórico ao carregar a partida; a
+ * orientação atual de cada personagem é preservada.
+ */
+function stripRotationActions(state: AppState): AppState {
+  const history = state.history;
+  if (!history) return state;
+  const past = history.past.filter((a) => a.type !== 'ROTATE');
+  const future = history.future.filter((a) => a.type !== 'ROTATE');
+  if (
+    past.length === history.past.length &&
+    future.length === history.future.length
+  ) {
+    return state;
+  }
+  return { ...state, history: { past, future } };
+}
+
 export function normalizeAppState(state: AppState): AppState {
-  if (state.lastAttack === undefined || state.lastAttack === null) {
-    return { ...state, lastAttack: state.lastAttack ?? null };
+  const base = stripRotationActions(state);
+
+  if (base.lastAttack === undefined || base.lastAttack === null) {
+    return { ...base, lastAttack: base.lastAttack ?? null };
   }
   return {
-    ...state,
+    ...base,
     lastAttack: {
-      ...state.lastAttack,
-      attackerPosition: state.lastAttack.attackerPosition
-        ? { ...state.lastAttack.attackerPosition }
+      ...base.lastAttack,
+      attackerPosition: base.lastAttack.attackerPosition
+        ? { ...base.lastAttack.attackerPosition }
         : null,
-      targetOrigin: { ...state.lastAttack.targetOrigin },
-      cells: Array.isArray(state.lastAttack.cells)
-        ? state.lastAttack.cells.map((c) => ({ ...c }))
+      targetOrigin: { ...base.lastAttack.targetOrigin },
+      cells: Array.isArray(base.lastAttack.cells)
+        ? base.lastAttack.cells.map((c) => ({ ...c }))
         : [],
     },
   };
@@ -1250,16 +1271,17 @@ export const useGameStore = create<GameStore>((set, get) => {
       const ch = prev.characters[characterId];
       if (!ch || ch.facing === facing) return;
 
-      const action: Action = {
-        id: uid('act'),
-        type: 'ROTATE',
-        timestamp: Date.now(),
-        description: `${ch.name} girou para ${DIRECTION_SHORT[facing]}`,
-        data: { characterId, facing },
-        inverse: { characterId, facing: ch.facing },
+      // A orientação segue o cursor (8 direções) e pode mudar dezenas de vezes
+      // enquanto se move o mouse pelo tabuleiro. Não é uma jogada: fica fora
+      // do histórico para não encher o Log nem poluir o Desfazer/Refazer.
+      const next: AppState = {
+        ...prev,
+        characters: {
+          ...prev.characters,
+          [characterId]: { ...ch, facing },
+        },
       };
 
-      const next = executeCommand(prev, action);
       set({ appState: next });
       persistCurrent(next);
     },
@@ -1897,14 +1919,15 @@ export const useGameStore = create<GameStore>((set, get) => {
         resolvedAt: Date.now(),
       };
 
+      const attackDirection = DIRECTION_LABELS[targeting.direction];
       const action: Action = {
         id: uid('act'),
         type: 'ATTACK_RESOLVE',
         timestamp: Date.now(),
         description:
           summaryNames.length > 0
-            ? `${attacker.name} usou "${attack.name}" → ${summaryNames.join(', ')}`
-            : `${attacker.name} usou "${attack.name}" (nenhum dano aplicado)`,
+            ? `${attacker.name} usou "${attack.name}" em direção a ${attackDirection} → ${summaryNames.join(', ')}`
+            : `${attacker.name} usou "${attack.name}" em direção a ${attackDirection} (nenhum alvo atingido)`,
         data: {
           attackerId: attacker.id,
           attackerFacing: targeting.direction,

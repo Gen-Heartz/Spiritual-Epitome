@@ -273,6 +273,12 @@
   font-size: 12px;
 }
 
+/* Ataques são a entrada principal do Log: destaque dourado discreto. */
+.historyItemAttack {
+  border-left-color: var(--gold-primary);
+  background: rgba(201, 166, 92, 0.08);
+}
+
 .historyTime {
   font-size: 10.5px;
   color: var(--text-muted);

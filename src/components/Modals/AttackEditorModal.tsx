@@ -20,6 +20,7 @@ import {
   rotateOffset,
 } from '../../engine/rotation';
 import styles from './ModalShared.module.css';
+import editorStyles from './AttackEditorModal.module.css';
 
 type DrawTool =
   | 'individual'
@@ -34,6 +35,17 @@ type DrawTool =
   | 'eraser';
 
 const EDITOR_HALF = 7; // Grid 15×15 de -7 a +7
+
+const IMPACT_PRESETS = [
+  'Corpo a Corpo',
+  'Cortante',
+  'Perfurante',
+  'Contundente',
+  'Impacto',
+  'Fogo',
+  'Gelo',
+  'Arcano',
+];
 
 const ALL_DIRS: Direction[] = [
   Direction.North,
@@ -425,16 +437,9 @@ export const AttackEditorModal: React.FC = () => {
           </button>
         </div>
 
-        <div
-          className={styles.body}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '330px 1fr',
-            gap: 18,
-          }}
-        >
+        <div className={`${styles.body} ${editorStyles.editorBody}`}>
           {/* Coluna Esquerda: Atributos do Ataque e Zonas */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+          <div className={editorStyles.column}>
             <div className={styles.field}>
               <label className={styles.label}>Nome do Ataque</label>
               <input
@@ -446,7 +451,7 @@ export const AttackEditorModal: React.FC = () => {
               />
             </div>
 
-            <div className={styles.row3}>
+            <div className={styles.row2}>
               <div className={styles.field}>
                 <label className={styles.label}>Dano</label>
                 <input
@@ -467,14 +472,37 @@ export const AttackEditorModal: React.FC = () => {
                   onChange={(e) => setRange(Number(e.target.value))}
                 />
               </div>
-              <div className={styles.field}>
-                <label className={styles.label}>Tipo Livre</label>
-                <input
-                  className={styles.input}
-                  placeholder="Cortante, Fogo..."
-                  value={impactType}
-                  onChange={(e) => setImpactType(e.target.value)}
-                />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label}>Tipo de Impacto</label>
+              <input
+                className={styles.input}
+                placeholder="Corpo a Corpo, Perfurante, Fogo..."
+                value={impactType}
+                onChange={(e) => setImpactType(e.target.value)}
+                list="impact-type-presets"
+              />
+              <datalist id="impact-type-presets">
+                {IMPACT_PRESETS.map((p) => (
+                  <option key={p} value={p} />
+                ))}
+              </datalist>
+              <div className={editorStyles.impactChips}>
+                {IMPACT_PRESETS.slice(0, 5).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    className={`${editorStyles.impactChip} ${
+                      impactType.trim().toLowerCase() === p.toLowerCase()
+                        ? editorStyles.impactChipActive
+                        : ''
+                    }`}
+                    onClick={() => setImpactType(p)}
+                  >
+                    {p}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -573,18 +601,12 @@ export const AttackEditorModal: React.FC = () => {
 
             {/* Validador de Rotação em 8 Direções (Parte 12.2 Etapa C) */}
             <div className={styles.card}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
+              <div className={editorStyles.rotationHeader}>
                 <span className={styles.label}>
                   <RotateCw size={12} style={{ marginRight: 4 }} />
                   Testar Rotação (8 Direções)
                 </span>
-                <span style={{ fontSize: 11, color: 'var(--gold-bright)' }}>
+                <span className={editorStyles.rotationBase}>
                   Base = Norte (↑)
                 </span>
               </div>
@@ -612,8 +634,8 @@ export const AttackEditorModal: React.FC = () => {
           </div>
 
           {/* Coluna Direita: Ferramentas de Desenho e Grid Visual 15×15 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div className={styles.card} style={{ padding: '9px 11px' }}>
+          <div className={editorStyles.column}>
+            <div className={`${styles.card} ${editorStyles.toolsCard}`}>
               <div className={styles.label}>
                 Ferramentas de Desenho (clique ou arraste no grid abaixo)
               </div>
@@ -675,29 +697,8 @@ export const AttackEditorModal: React.FC = () => {
             </div>
 
             {/* Grid Interativo 15×15 */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: 12,
-                background: '#0d1119',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 8,
-              }}
-            >
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: `repeat(${coords.length}, 26px)`,
-                  gridTemplateRows: `repeat(${coords.length}, 26px)`,
-                  gap: 1,
-                  background: 'rgba(148, 163, 184, 0.14)',
-                  border: '1px solid var(--border-strong)',
-                  userSelect: 'none',
-                }}
-              >
+            <div className={editorStyles.canvasCard}>
+              <div className={editorStyles.tileGrid}>
                 {coords.map((gy) =>
                   coords.map((gx) => {
                     const isAttacker = gx === 0 && gy === 0;
@@ -716,20 +717,12 @@ export const AttackEditorModal: React.FC = () => {
                     return (
                       <div
                         key={`${gx},${gy}`}
+                        className={editorStyles.tile}
                         onMouseDown={() => handleCellDown(gx, gy)}
                         onMouseEnter={() => handleCellEnter(gx, gy)}
                         title={`Offset (${gx}, ${gy})`}
                         style={{
-                          width: 26,
-                          height: 26,
                           background: bg,
-                          position: 'relative',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          fontSize: 11,
-                          fontWeight: 700,
                           border: isOrigin
                             ? '1.5px dashed #4ade80'
                             : isAttacker
@@ -763,15 +756,7 @@ export const AttackEditorModal: React.FC = () => {
                 )}
               </div>
 
-              <div
-                style={{
-                  marginTop: 8,
-                  fontSize: 11.5,
-                  color: 'var(--text-secondary)',
-                  display: 'flex',
-                  gap: 14,
-                }}
-              >
+              <div className={editorStyles.legend}>
                 <span>🛡 Centro (0,0) = Atacante</span>
                 <span>⊕ Borda Verde = Origem ({origin.x},{origin.y})</span>
                 <span>

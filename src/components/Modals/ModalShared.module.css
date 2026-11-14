@@ -24,7 +24,7 @@
 }
 
 .modalWide {
-  max-width: 960px;
+  max-width: min(1100px, calc(100vw - 32px));
 }
 
 .header {
@@ -86,26 +86,33 @@
 
 .row2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
 }
 
 .row3 {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
 .row4 {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
+}
+
+.row2 > *,
+.row3 > *,
+.row4 > * {
+  min-width: 0;
 }
 
 .field {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  min-width: 0;
 }
 
 .label {
@@ -123,6 +130,10 @@
   background: var(--bg-input);
   color: var(--text-primary);
   font-size: 13px;
+  /* Inputs têm largura intrínseca (~20 caracteres); sem isto as grelhas
+     de 2/3/4 colunas transbordam e ficam por baixo de outros painéis. */
+  width: 100%;
+  min-width: 0;
 }
 
 .input:focus,

@@ -1,0 +1,137 @@
+/* Layout próprio do Editor Visual de Ataque.
+   Corrige o transbordo da coluna de atributos (o grid de área cobria o
+   campo "Tipo de Impacto" e parte do "Alcance") e torna o canvas fluido. */
+
+.editorBody {
+  display: grid;
+  /* minmax(0, ...) impede que o conteúdo intrínseco dos inputs estique as colunas */
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  min-width: 0;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  min-width: 0;
+}
+
+/* ---- Área de desenho ---- */
+
+.toolsCard {
+  padding: 9px 11px;
+  min-width: 0;
+}
+
+.canvasCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  min-width: 0;
+  background: #0d1119;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+}
+
+.tileGrid {
+  display: grid;
+  grid-template-columns: repeat(15, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 1px;
+  width: min(406px, 100%);
+  aspect-ratio: 1 / 1;
+  background: rgba(148, 163, 184, 0.14);
+  border: 1px solid var(--border-strong);
+  user-select: none;
+  touch-action: none;
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  cursor: pointer;
+  font-size: clamp(8px, 60%, 12px);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* ---- Tipo de Impacto ---- */
+
+.impactChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.impactChip {
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.impactChip:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.impactChipActive {
+  background: rgba(201, 166, 92, 0.2);
+  border-color: var(--gold-primary);
+  color: var(--gold-bright);
+  font-weight: 600;
+}
+
+/* ---- Responsivo ---- */
+
+/* Ecrãs intermédios: mantém as duas colunas, mas estreita os atributos
+   para o canvas continuar visível lado a lado. */
+@media (max-width: 1120px) {
+  .editorBody {
+    grid-template-columns: minmax(0, 250px) minmax(0, 1fr);
+    gap: 14px;
+  }
+}
+
+/* Sem espaço para duas colunas: empilha atributos e área de desenho. */
+@media (max-width: 860px) {
+  .editorBody {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.rotationHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 10px;
+}
+
+.rotationBase {
+  font-size: 11px;
+  color: var(--gold-bright);
+  white-space: nowrap;
+}
