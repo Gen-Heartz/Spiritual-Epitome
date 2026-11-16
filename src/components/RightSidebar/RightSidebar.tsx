@@ -74,6 +74,10 @@ export const RightSidebar: React.FC = () => {
   const deleteCharacter = useGameStore((s) => s.deleteCharacter);
   const saveCharacterAsTemplate = useGameStore((s) => s.saveCharacterAsTemplate);
   const nextTurn = useGameStore((s) => s.nextTurn);
+  const setCharacterVisionRange = useGameStore(
+    (s) => s.setCharacterVisionRange
+  );
+  const setFogRangeMode = useGameStore((s) => s.setFogRangeMode);
 
   const startAttackTargeting = useGameStore((s) => s.startAttackTargeting);
   const updateAttackDirection = useGameStore((s) => s.updateAttackDirection);
@@ -714,6 +718,89 @@ export const RightSidebar: React.FC = () => {
                       {DIRECTION_SHORT[dir]}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Visão (Névoa de Visão — alcance individual) */}
+              <div className={styles.cardBlock}>
+                <div className={styles.blockTitle}>
+                  <span>Visão (Névoa)</span>
+                  <span>
+                    {appState.settings.fogMode === 'exploration'
+                      ? 'Ativo'
+                      : 'Modo Dia'}
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      fontSize: 12,
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    Alcance
+                    <input
+                      type="number"
+                      min={1}
+                      max={40}
+                      className={styles.dirBtn}
+                      style={{ width: 58, textAlign: 'center', padding: '4px 6px' }}
+                      value={selectedChar.visionRange ?? ''}
+                      placeholder={String(
+                        appState.settings.fogGlobalRange ?? 8
+                      )}
+                      onChange={(e) =>
+                        setCharacterVisionRange(
+                          selectedChar.id,
+                          e.target.value === ''
+                            ? null
+                            : Number(e.target.value)
+                        )
+                      }
+                      title="Alcance de visão individual (deixe vazio para usar o global)"
+                    />
+                  </label>
+
+                  <button
+                    className={styles.dirBtn}
+                    onClick={() =>
+                      setCharacterVisionRange(selectedChar.id, null)
+                    }
+                    title="Remover o valor individual e usar o alcance global"
+                  >
+                    Usar global
+                  </button>
+
+                  <button
+                    className={`${styles.dirBtn} ${
+                      appState.settings.fogRangeMode === 'individual'
+                        ? styles.dirBtnActive
+                        : ''
+                    }`}
+                    onClick={() => setFogRangeMode('individual')}
+                    title="Passar o tabuleiro a usar o alcance individual de cada unidade"
+                  >
+                    Individual
+                  </button>
+                </div>
+
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                  {selectedChar.visionRange
+                    ? `Esta unidade vê ${selectedChar.visionRange} quadrados.`
+                    : `Usa o alcance global de ${
+                        appState.settings.fogGlobalRange ?? 8
+                      } quadrados.`}
                 </div>
               </div>
 

@@ -23,6 +23,12 @@ export type DiagonalRule = 'chebyshev' | 'alternating';
 
 export type DamageRule = 'attack_only' | 'sum_all';
 
+/** Modo de visualização do tabuleiro: dia (mapa completo) ou exploração (névoa) */
+export type FogMode = 'day' | 'exploration';
+
+/** Origem do alcance de visão: global para todas as unidades ou individual por unidade */
+export type FogRangeMode = 'global' | 'individual';
+
 // === Entidades ===
 
 export interface Character {
@@ -42,6 +48,8 @@ export interface Character {
   fichaId?: string;
   /** Resumo vivo dos recursos e atributos de combate/magia do Spiritual-Epitome */
   epitomeSummary?: EpitomeTacticalSummary;
+  /** Alcance de visão individual (Névoa de Visão), sobrepõe-se ao alcance global */
+  visionRange?: number | null;
 }
 
 export interface Weapon {
@@ -146,6 +154,14 @@ export interface SystemSettings {
   showCoordinates: boolean;
   showGrid: boolean;
   checkLoSOnAttacks: boolean;
+  /** Modo de visualização — 'day' mantém o tabuleiro totalmente visível */
+  fogMode?: FogMode;
+  /** Se o alcance de visão vem da configuração global ou do valor de cada unidade */
+  fogRangeMode?: FogRangeMode;
+  /** Alcance de visão global, em quadrados (padrão 8) */
+  fogGlobalRange?: number;
+  /** Opacidade/força da escuridão fora da visão (0.35–1) */
+  fogIntensity?: number;
 }
 
 // === Último Ataque Resolvido (área persistente no grid) ===

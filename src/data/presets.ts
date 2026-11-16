@@ -42,6 +42,10 @@ export function createBlankMatchState(
       showCoordinates: true,
       showGrid: true,
       checkLoSOnAttacks: true,
+      fogMode: 'day',
+      fogRangeMode: 'global',
+      fogGlobalRange: 8,
+      fogIntensity: 1,
     },
     lastAttack: null,
   };
@@ -451,6 +455,10 @@ export function createSampleEncounterState(): AppState {
       showCoordinates: true,
       showGrid: true,
       checkLoSOnAttacks: true,
+      fogMode: 'day',
+      fogRangeMode: 'global',
+      fogGlobalRange: 8,
+      fogIntensity: 1,
     },
     lastAttack: null,
   };

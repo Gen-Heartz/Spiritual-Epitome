@@ -481,12 +481,17 @@ export async function parseMatchPayloadToAppState(
       past: [],
       future: [],
     },
-    settings: parsed.settings || {
+    settings: {
       diagonalRule: 'chebyshev',
       damageRule: 'attack_only',
       showCoordinates: true,
       showGrid: true,
       checkLoSOnAttacks: true,
+      fogMode: 'day',
+      fogRangeMode: 'global',
+      fogGlobalRange: 8,
+      fogIntensity: 1,
+      ...(parsed.settings || {}),
     },
     lastAttack:
       parsed.lastAttack && Array.isArray(parsed.lastAttack.cells)

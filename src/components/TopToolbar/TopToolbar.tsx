@@ -7,6 +7,7 @@ import {
   FolderOpen,
   LocateFixed,
   Mountain,
+  Moon,
   MousePointer,
   Redo2,
   RotateCcw,
@@ -15,6 +16,7 @@ import {
   Settings,
   Shield,
   SkipForward,
+  Sun,
   Swords,
   Trees,
   Undo2,
@@ -44,9 +46,26 @@ export const TopToolbar: React.FC = () => {
   const openSpawnFichaModal = useGameStore((s) => s.openSpawnFichaModal);
   const setActiveScreen = useGameStore((s) => s.setActiveScreen);
   const setSettingsModalOpen = useGameStore((s) => s.setSettingsModalOpen);
+  const setFogMode = useGameStore((s) => s.setFogMode);
+  const setFogRangeMode = useGameStore((s) => s.setFogRangeMode);
+  const setFogGlobalRange = useGameStore((s) => s.setFogGlobalRange);
 
   const [dimW, setDimW] = useState(String(appState.board.width));
   const [dimH, setDimH] = useState(String(appState.board.height));
+
+  const fogMode = appState.settings.fogMode ?? 'day';
+  const fogRangeMode = appState.settings.fogRangeMode ?? 'global';
+  const fogGlobalRange = appState.settings.fogGlobalRange ?? 8;
+  const [fogRangeInput, setFogRangeInput] = useState(String(fogGlobalRange));
+
+  useEffect(() => {
+    setFogRangeInput(String(fogGlobalRange));
+  }, [fogGlobalRange]);
+
+  const applyFogRange = () => {
+    const n = Number(fogRangeInput);
+    if (!Number.isNaN(n)) setFogGlobalRange(n);
+  };
 
   useEffect(() => {
     setDimW(String(appState.board.width));
@@ -146,6 +165,76 @@ export const TopToolbar: React.FC = () => {
             <span>LoS</span>
           </button>
         </div>
+
+        {/* Névoa de Visão (Exploração) */}
+        <div
+          className={styles.toolGroup}
+          title="Modo de visualização do tabuleiro: Dia (mapa completo) ou Exploração (visão limitada)"
+        >
+          <button
+            className={`${styles.toolBtn} ${
+              fogMode === 'day' ? styles.toolBtnActive : ''
+            }`}
+            onClick={() => setFogMode('day')}
+          >
+            <Sun size={14} />
+            <span>Dia</span>
+          </button>
+          <button
+            className={`${styles.toolBtn} ${
+              fogMode === 'exploration' ? styles.toolBtnActive : ''
+            }`}
+            onClick={() => setFogMode('exploration')}
+          >
+            <Moon size={14} />
+            <span>Exploração</span>
+          </button>
+        </div>
+
+        {fogMode === 'exploration' && (
+          <div
+            className={styles.dimBox}
+            title={
+              fogRangeMode === 'global'
+                ? 'Alcance de visão global (quadrados)'
+                : 'Alcance global — cada unidade pode ter o seu valor na barra lateral'
+            }
+          >
+            <span>Visão</span>
+            <input
+              type="number"
+              min={1}
+              max={40}
+              className={styles.dimInput}
+              value={fogRangeInput}
+              onChange={(e) => setFogRangeInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && applyFogRange()}
+              onBlur={applyFogRange}
+            />
+            <div className={styles.toolGroup} style={{ padding: 0, border: 'none', background: 'transparent' }}>
+              <button
+                className={`${styles.toolBtn} ${
+                  fogRangeMode === 'global' ? styles.toolBtnActive : ''
+                }`}
+                onClick={() => setFogRangeMode('global')}
+                title="Usar um alcance único para todas as unidades"
+                style={{ fontSize: 10.5, padding: '3px 6px' }}
+              >
+                Global
+              </button>
+              <button
+                className={`${styles.toolBtn} ${
+                  fogRangeMode === 'individual' ? styles.toolBtnActive : ''
+                }`}
+                onClick={() => setFogRangeMode('individual')}
+                title="Cada unidade usa o seu próprio alcance (definido na barra lateral direita)"
+                style={{ fontSize: 10.5, padding: '3px 6px' }}
+              >
+                Individual
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Dimensões do Grid em Tempo Real */}
         <div className={styles.dimBox} title="Dimensões do Grid (Largura × Altura)">

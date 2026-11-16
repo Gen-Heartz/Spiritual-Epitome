@@ -8,6 +8,10 @@ export const SettingsModal: React.FC = () => {
   const settings = useGameStore((s) => s.appState.settings);
   const setSettingsModalOpen = useGameStore((s) => s.setSettingsModalOpen);
   const updateSettings = useGameStore((s) => s.updateSettings);
+  const setFogMode = useGameStore((s) => s.setFogMode);
+  const setFogRangeMode = useGameStore((s) => s.setFogRangeMode);
+  const setFogGlobalRange = useGameStore((s) => s.setFogGlobalRange);
+  const setFogIntensity = useGameStore((s) => s.setFogIntensity);
 
   if (!open) return null;
 
@@ -32,6 +36,113 @@ export const SettingsModal: React.FC = () => {
 
         <div className={styles.body}>
           {/* Parte 6.3: Movimentação Diagonal */}
+          {/* Névoa de Visão (Exploração) */}
+          <div className={styles.card}>
+            <div style={{ fontWeight: 700, color: 'var(--gold-bright)' }}>
+              Névoa de Visão (Exploração)
+            </div>
+            <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+              Camada apenas visual: não altera posições, terrenos, unidades nem
+              regras. No Modo Dia o tabuleiro mantém-se totalmente visível.
+            </span>
+
+            <div className={styles.chipRow}>
+              <button
+                type="button"
+                className={`${styles.chip} ${
+                  (settings.fogMode ?? 'day') === 'day'
+                    ? styles.chipActive
+                    : ''
+                }`}
+                onClick={() => setFogMode('day')}
+              >
+                Modo Dia (mapa completo)
+              </button>
+              <button
+                type="button"
+                className={`${styles.chip} ${
+                  settings.fogMode === 'exploration' ? styles.chipActive : ''
+                }`}
+                onClick={() => setFogMode('exploration')}
+              >
+                Modo Exploração (visão limitada)
+              </button>
+            </div>
+
+            <div className={styles.chipRow}>
+              <button
+                type="button"
+                className={`${styles.chip} ${
+                  (settings.fogRangeMode ?? 'global') === 'global'
+                    ? styles.chipActive
+                    : ''
+                }`}
+                onClick={() => setFogRangeMode('global')}
+              >
+                Alcance Global
+              </button>
+              <button
+                type="button"
+                className={`${styles.chip} ${
+                  settings.fogRangeMode === 'individual'
+                    ? styles.chipActive
+                    : ''
+                }`}
+                onClick={() => setFogRangeMode('individual')}
+              >
+                Alcance Individual (por unidade)
+              </button>
+            </div>
+
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 12.5,
+              }}
+            >
+              <span style={{ color: 'var(--text-secondary)' }}>
+                Alcance global (quadrados)
+              </span>
+              <input
+                type="number"
+                min={1}
+                max={40}
+                className={styles.input}
+                style={{ width: 84 }}
+                value={settings.fogGlobalRange ?? 8}
+                onChange={(e) => setFogGlobalRange(Number(e.target.value))}
+              />
+            </label>
+
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 12.5,
+              }}
+            >
+              <span style={{ color: 'var(--text-secondary)' }}>
+                Escuridão da névoa
+              </span>
+              <input
+                type="range"
+                min={35}
+                max={100}
+                value={Math.round((settings.fogIntensity ?? 1) * 100)}
+                onChange={(e) =>
+                  setFogIntensity(Number(e.target.value) / 100)
+                }
+                style={{ flex: 1, maxWidth: 220 }}
+              />
+              <span style={{ color: 'var(--gold-bright)', fontWeight: 700 }}>
+                {Math.round((settings.fogIntensity ?? 1) * 100)}%
+              </span>
+            </label>
+          </div>
+
           <div className={styles.card}>
             <div style={{ fontWeight: 700, color: 'var(--gold-bright)' }}>
               Regra de Movimentação Diagonal (Parte 6.3)

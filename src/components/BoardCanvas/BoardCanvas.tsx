@@ -19,6 +19,11 @@ import { calculateReachableCells } from '../../engine/movement';
 import { hasCreatureToCellLoS, traceBresenhamLine } from '../../engine/los';
 import { projectAttackOnBoard } from '../../engine/rotation';
 import {
+  alcanceVisaoDaUnidade,
+  calcularVisaoDaUnidade,
+  nevoaAtiva,
+} from '../../engine/vision';
+import {
   getCachedImageElement,
   onImageCacheUpdated,
 } from '../../utils/imageProcessor';
@@ -208,6 +213,50 @@ export const BoardCanvas: React.FC = () => {
     },
     [appState.characters, selectedCharacterId]
   );
+
+  // === Névoa de Visão (Exploração) ===
+  // Só calcula a área visível a partir da unidade selecionada; não altera
+  // posições, terrenos ou dados das unidades — é apenas camada visual.
+  const fogEnabled = nevoaAtiva(appState.settings);
+  const fogRangeMode = appState.settings.fogRangeMode ?? 'global';
+  const fogGlobalRange = appState.settings.fogGlobalRange ?? 8;
+  const fogIntensity = Math.max(
+    0.35,
+    Math.min(1, appState.settings.fogIntensity ?? 1)
+  );
+
+  const visionReference = useMemo(() => {
+    const selected = selectedCharacterId
+      ? appState.characters[selectedCharacterId]
+      : undefined;
+    if (selected?.position) return selected;
+    // Sem unidade selecionada posicionada: usa a primeira unidade no tabuleiro
+    return (
+      Object.values(appState.characters).find((c) => c.position) ?? null
+    );
+  }, [selectedCharacterId, appState.characters]);
+
+  const vision = useMemo(() => {
+    if (!fogEnabled || !visionReference) return null;
+    const range = alcanceVisaoDaUnidade(
+      visionReference,
+      fogRangeMode,
+      fogGlobalRange
+    );
+    return calcularVisaoDaUnidade(
+      appState.board,
+      visionReference,
+      range,
+      appState.settings.diagonalRule
+    );
+  }, [
+    fogEnabled,
+    visionReference,
+    fogRangeMode,
+    fogGlobalRange,
+    appState.board,
+    appState.settings.diagonalRule,
+  ]);
 
   // === Renderização Sob Demanda (Dirty Flag — Parte 3.4) ===
   const drawRef = useRef<() => void>(() => {});
@@ -985,6 +1034,87 @@ export const BoardCanvas: React.FC = () => {
         CELL_SIZE - 2
       );
     }
+
+    // =========================================================================
+    // CAMADA 9: Névoa de Visão (Modo Exploração)
+    // Puramente visual: escurece os quadrados fora do alcance de visão da
+    // unidade de referência. Não altera dados, posições nem interações.
+    // =========================================================================
+    if (fogEnabled && vision) {
+      const { visible, edge } = vision;
+      const escuridao = `rgba(4, 6, 10, ${fogIntensity})`;
+      const orla = `rgba(4, 6, 10, ${Math.max(0, fogIntensity - 0.28)})`;
+
+      ctx.save();
+      ctx.setLineDash([]);
+
+      // Desenha em faixas horizontais contínuas para reduzir o custo
+      for (let y = 0; y < board.height; y++) {
+        let runStart = -1;
+        let runKind: 0 | 1 | 2 = 0; // 0 = visível, 1 = orla, 2 = névoa total
+
+        const flush = (endX: number) => {
+          if (runStart < 0 || runKind === 0) return;
+          ctx.fillStyle = runKind === 2 ? escuridao : orla;
+          ctx.fillRect(
+            runStart * CELL_SIZE,
+            y * CELL_SIZE,
+            (endX - runStart) * CELL_SIZE,
+            CELL_SIZE
+          );
+        };
+
+        for (let x = 0; x <= board.width; x++) {
+          const k = x < board.width ? cellKey(x, y) : null;
+          const kind: 0 | 1 | 2 =
+            k === null ? 0 : visible.has(k) ? 0 : edge.has(k) ? 1 : 2;
+
+          if (kind !== runKind) {
+            flush(x);
+            runStart = x;
+            runKind = kind;
+          }
+        }
+      }
+
+      // Contorno discreto da área de visão (delimita o que se vê, sem brilho)
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = 'rgba(201, 166, 92, 0.16)';
+      ctx.lineWidth = 1.2 / cameraRef.current.zoom;
+      for (const k of visible) {
+        const [xs, ys] = k.split(',');
+        const x = Number(xs);
+        const y = Number(ys);
+        const px = x * CELL_SIZE;
+        const py = y * CELL_SIZE;
+        if (!visible.has(cellKey(x, y - 1))) {
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(px + CELL_SIZE, py);
+          ctx.stroke();
+        }
+        if (!visible.has(cellKey(x, y + 1))) {
+          ctx.beginPath();
+          ctx.moveTo(px, py + CELL_SIZE);
+          ctx.lineTo(px + CELL_SIZE, py + CELL_SIZE);
+          ctx.stroke();
+        }
+        if (!visible.has(cellKey(x - 1, y))) {
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(px, py + CELL_SIZE);
+          ctx.stroke();
+        }
+        if (!visible.has(cellKey(x + 1, y))) {
+          ctx.beginPath();
+          ctx.moveTo(px + CELL_SIZE, py);
+          ctx.lineTo(px + CELL_SIZE, py + CELL_SIZE);
+          ctx.stroke();
+        }
+      }
+
+      ctx.restore();
+    }
   };
 
   // Centralizar e ajustar câmera ao tamanho do container (Parte 3.3)
@@ -1652,6 +1782,20 @@ export const BoardCanvas: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Indicador do modo de visão (apenas em Exploração) */}
+      {fogEnabled && (
+        <div className={styles.fogHud}>
+          <span className={styles.fogHudIcon} aria-hidden="true">
+            &#9789;
+          </span>
+          <span>
+            Exploração • {visionReference ? visionReference.name : 'sem unidade'} •{' '}
+            {vision ? vision.range : fogGlobalRange} quad.
+            {fogRangeMode === 'individual' ? ' (individual)' : ' (global)'}
+          </span>
+        </div>
+      )}
 
       {/* Coordenadas e status do quadrado sob o mouse */}
       <div className={styles.coordsHud}>

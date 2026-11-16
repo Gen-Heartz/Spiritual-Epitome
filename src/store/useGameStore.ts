@@ -9,6 +9,8 @@ import {
   Character,
   CombatMode,
   Direction,
+  FogMode,
+  FogRangeMode,
   ImpactZone,
   LastResolvedAttack,
   SystemSettings,
@@ -95,7 +97,18 @@ function stripRotationActions(state: AppState): AppState {
 }
 
 export function normalizeAppState(state: AppState): AppState {
-  const base = stripRotationActions(state);
+  const withFog: AppState = {
+    ...state,
+    settings: {
+      ...state.settings,
+      fogMode: state.settings?.fogMode ?? 'day',
+      fogRangeMode: state.settings?.fogRangeMode ?? 'global',
+      fogGlobalRange: state.settings?.fogGlobalRange ?? 8,
+      fogIntensity: state.settings?.fogIntensity ?? 1,
+    },
+  };
+
+  const base = stripRotationActions(withFog);
 
   if (base.lastAttack === undefined || base.lastAttack === null) {
     return { ...base, lastAttack: base.lastAttack ?? null };
@@ -297,6 +310,11 @@ export interface GameStore {
 
   // Configurações e Tabuleiro
   updateSettings: (partial: Partial<SystemSettings>) => void;
+  setFogMode: (mode: FogMode) => void;
+  setFogRangeMode: (mode: FogRangeMode) => void;
+  setFogGlobalRange: (range: number) => void;
+  setFogIntensity: (intensity: number) => void;
+  setCharacterVisionRange: (characterId: string, range: number | null) => void;
   resizeBoard: (width: number, height: number) => void;
   applyTerrainChanges: (changes: Record<string, TerrainType>) => void;
 
@@ -1076,6 +1094,75 @@ export const useGameStore = create<GameStore>((set, get) => {
       const next: AppState = {
         ...prev,
         settings: { ...prev.settings, ...partial },
+      };
+      set({ appState: next });
+      persistCurrent(next);
+    },
+
+    // === Névoa de Visão (Exploração) — apenas visualização, não altera dados ===
+    setFogMode: (mode) => {
+      const prev = get().appState;
+      const next: AppState = {
+        ...prev,
+        settings: { ...prev.settings, fogMode: mode },
+      };
+      set({ appState: next });
+      persistCurrent(next);
+      get().showToast(
+        mode === 'exploration'
+          ? 'Modo Exploração ativo — visão limitada à unidade selecionada.'
+          : 'Modo Dia ativo — mapa totalmente visível.'
+      );
+    },
+
+    setFogRangeMode: (mode) => {
+      const prev = get().appState;
+      const next: AppState = {
+        ...prev,
+        settings: { ...prev.settings, fogRangeMode: mode },
+      };
+      set({ appState: next });
+      persistCurrent(next);
+    },
+
+    setFogGlobalRange: (range) => {
+      const prev = get().appState;
+      const value = Math.max(1, Math.min(40, Math.round(range) || 8));
+      const next: AppState = {
+        ...prev,
+        settings: { ...prev.settings, fogGlobalRange: value },
+      };
+      set({ appState: next });
+      persistCurrent(next);
+    },
+
+    setFogIntensity: (intensity) => {
+      const prev = get().appState;
+      const value = Math.max(0.35, Math.min(1, Number(intensity) || 1));
+      const next: AppState = {
+        ...prev,
+        settings: { ...prev.settings, fogIntensity: value },
+      };
+      set({ appState: next });
+      persistCurrent(next);
+    },
+
+    setCharacterVisionRange: (characterId, range) => {
+      const prev = get().appState;
+      const ch = prev.characters[characterId];
+      if (!ch) return;
+
+      const valor =
+        range === null || !Number.isFinite(Number(range))
+          ? null
+          : Math.max(1, Math.min(40, Math.round(Number(range))));
+
+      const next: AppState = {
+        ...prev,
+        characters: {
+          ...prev.characters,
+          [characterId]: { ...ch, visionRange: valor },
+        },
       };
       set({ appState: next });
       persistCurrent(next);
