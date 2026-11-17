@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Moon, X } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import {
   canPlaceCharacter,
@@ -1868,8 +1868,12 @@ export const BoardCanvas: React.FC = () => {
       {/* Indicador do modo de visão (apenas em Exploração) */}
       {fogEnabled && (
         <div className={styles.fogHud}>
-          <span className={styles.fogHudIcon} aria-hidden="true">
-            &#9789;
+          <span
+            className={styles.fogHudIcon}
+            aria-hidden="true"
+            style={{ display: 'inline-flex', alignItems: 'center' }}
+          >
+            <Moon size={13} />
           </span>
           <span>
             Exploração • {visionReference ? visionReference.name : 'sem unidade'} •{' '}
@@ -1886,8 +1890,16 @@ export const BoardCanvas: React.FC = () => {
             escadaDaUnidade.targetMapId ? styles.stairHudLinked : ''
           }`}
         >
-          <span className={styles.stairHudIcon} aria-hidden="true">
-            {simboloDirecao(escadaDaUnidade.direction)}
+          <span
+            className={styles.stairHudIcon}
+            aria-hidden="true"
+            style={{ display: 'inline-flex', alignItems: 'center' }}
+          >
+            {escadaDaUnidade.direction === 'up' ? (
+              <ArrowUp size={13} />
+            ) : (
+              <ArrowDown size={13} />
+            )}
           </span>
           <span>
             {escadaDaUnidade.label}

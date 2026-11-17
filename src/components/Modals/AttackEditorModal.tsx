@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  CirclePlus,
   Crosshair,
   Eraser,
   Flame,
   RotateCw,
+  Shield,
   Trash2,
   X,
 } from 'lucide-react';
@@ -734,20 +736,27 @@ export const AttackEditorModal: React.FC = () => {
                           <span
                             style={{
                               color: '#fde047',
-                              fontSize: 12,
                               lineHeight: 1,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
                             }}
                             title="Atacante (Referência 0,0)"
                           >
-                            🛡
+                            <Shield size={12} />
                           </span>
                         )}
                         {!isAttacker && isOrigin && (
                           <span
-                            style={{ color: '#4ade80', fontSize: 10 }}
+                            style={{
+                              color: '#4ade80',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
                             title="Origem da Área"
                           >
-                            ⊕
+                            <CirclePlus size={10} />
                           </span>
                         )}
                       </div>
@@ -757,8 +766,17 @@ export const AttackEditorModal: React.FC = () => {
               </div>
 
               <div className={editorStyles.legend}>
-                <span>🛡 Centro (0,0) = Atacante</span>
-                <span>⊕ Borda Verde = Origem ({origin.x},{origin.y})</span>
+                <span
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
+                >
+                  <Shield size={12} /> Centro (0,0) = Atacante
+                </span>
+                <span
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
+                >
+                  <CirclePlus size={11} /> Borda Verde = Origem ({origin.x},
+                  {origin.y})
+                </span>
                 <span>
                   Quadrados ativos: <strong>{displayedBoardMap.totalCells}</strong>
                 </span>

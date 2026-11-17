@@ -8,6 +8,7 @@ import {
   Edit3,
   Footprints,
   MapPin,
+  Lock,
   MapPinOff,
   Plus,
   RefreshCw,
@@ -725,12 +726,22 @@ export const RightSidebar: React.FC = () => {
               <div className={styles.cardBlock}>
                 <div className={styles.blockTitle}>
                   <span>Visão (Névoa)</span>
-                  <span>
-                    {appState.settings.fogLocked === true
-                      ? '🔒 Trancado'
-                      : appState.settings.fogMode === 'exploration'
-                      ? 'Ativo'
-                      : 'Modo Dia'}
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    {appState.settings.fogLocked === true ? (
+                      <>
+                        <Lock size={11} /> Trancado
+                      </>
+                    ) : appState.settings.fogMode === 'exploration' ? (
+                      'Ativo'
+                    ) : (
+                      'Modo Dia'
+                    )}
                   </span>
                 </div>
 
@@ -884,8 +895,16 @@ export const RightSidebar: React.FC = () => {
                                 }
                               >
                                 <div>
-                                  <div style={{ fontWeight: 600, fontSize: 12 }}>
-                                    ⚔️ {atk.name}
+                                  <div
+                                    style={{
+                                      fontWeight: 600,
+                                      fontSize: 12,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 5,
+                                    }}
+                                  >
+                                    <Swords size={12} /> {atk.name}
                                   </div>
                                   <div
                                     style={{

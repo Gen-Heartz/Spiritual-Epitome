@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, X } from 'lucide-react';
+import { Lock, Settings, X } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import styles from './ModalShared.module.css';
 
@@ -55,11 +55,14 @@ export const SettingsModal: React.FC = () => {
                   background: 'rgba(239, 68, 68, 0.12)',
                   borderRadius: 4,
                   padding: '6px 9px',
+                  display: 'inline-flex',
+                  alignItems: 'flex-start',
+                  gap: 6,
                 }}
               >
-                &#128274; Visão trancada pela predefinição do mapa ativo.
-                Desbloqueia em Glossário → Locais → Mapas → Predefinição de
-                Visão.
+                <Lock size={13} style={{ flexShrink: 0, marginTop: 1 }} />
+                Visão trancada pela predefinição do mapa ativo. Desbloqueia em
+                Glossário → Locais → Mapas → Predefinição de Visão.
               </span>
             )}
 

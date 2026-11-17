@@ -1,5 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Upload } from 'lucide-react';
+import {
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  Hammer,
+  LayoutGrid,
+  Swords,
+  Upload,
+  X,
+} from 'lucide-react';
 import {
   AnguloMagicoStr,
   ArmaTipoKey,
@@ -972,8 +981,9 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
                     onClick={() =>
                       setOpenSlotPopup(openSlotPopup === 'int' ? null : 'int')
                     }
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
                   >
-                    Slots Internos ▾
+                    Slots Internos <ChevronDown size={11} />
                   </button>
                   <button
                     type="button"
@@ -981,8 +991,9 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
                     onClick={() =>
                       setOpenSlotPopup(openSlotPopup === 'ext' ? null : 'ext')
                     }
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
                   >
-                    Slots Externos ▾
+                    Slots Externos <ChevronDown size={11} />
                   </button>
                 </div>
 
@@ -1582,7 +1593,11 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
             <div className={styles.mochilaWeaponsBox}>
               <div className={styles.mochilaWeaponsHeader}>
                 <label className={styles.label} style={{ margin: 0 }}>
-                  &#9876; Zona de Armas (Mochila){' '}
+                  <Swords
+                    size={12}
+                    style={{ display: 'inline-block', verticalAlign: '-2px' }}
+                  />{' '}
+                  Zona de Armas (Mochila){' '}
                   <TooltipBadge text="Selecione armas criadas no Glossário -> Armas para guardar na mochila do personagem. Marque qual está Equipada para preencher automaticamente a aba Combate (somando Manualidade × 3) e levar seus golpes e áreas ao Tabuleiro." />
                 </label>
 
@@ -1590,8 +1605,9 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
                   type="button"
                   className={styles.mochilaEquipBtn}
                   onClick={handleOpenArsenalFromSheet}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
                 >
-                  &#9874; Forjar / Editar no Arsenal
+                  <Hammer size={12} /> Forjar / Editar no Arsenal
                 </button>
               </div>
 
@@ -1683,8 +1699,15 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
                                 {ARMA_TIPO_LABELS[porte]}
                               </span>
                               {isEquipped && (
-                                <span className={styles.mochilaBadgeEquipped}>
-                                  ✓ Equipada
+                                <span
+                                  className={styles.mochilaBadgeEquipped}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 3,
+                                  }}
+                                >
+                                  <Check size={10} /> Equipada
                                 </span>
                               )}
                             </div>
@@ -1716,8 +1739,13 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
                             className={styles.mochilaRemoveBtn}
                             onClick={() => handleRemoveWeaponFromMochila(wp.id)}
                             title="Retirar arma da mochila"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
                           >
-                            ✕
+                            <X size={12} />
                           </button>
                         </div>
                       </div>
@@ -1753,7 +1781,7 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
               className={styles.btnSecondary}
               onClick={onBack}
             >
-              &#9664; Voltar às Fichas
+              <ChevronLeft size={13} /> Voltar às Fichas
             </button>
 
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -1762,15 +1790,23 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
                 className={styles.btnSecondary}
                 onClick={handleSaveAndSendToBoard}
                 title="Salva a ficha e envia o personagem direto para o Tabuleiro Tático"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
               >
-                ♜ Salvar &amp; Enviar ao Tabuleiro
+                <LayoutGrid size={13} /> Salvar &amp; Enviar ao Tabuleiro
               </button>
               <button
                 type="button"
                 className={styles.btnPrimary}
                 onClick={handleManualSave}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
               >
-                {savedFeedback ? '✓ Salvo!' : 'Salvar Ficha'}
+                {savedFeedback ? (
+                  <>
+                    <Check size={13} /> Salvo!
+                  </>
+                ) : (
+                  'Salvar Ficha'
+                )}
               </button>
             </div>
           </footer>

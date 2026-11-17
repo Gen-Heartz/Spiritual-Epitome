@@ -1,4 +1,12 @@
 import React, { useEffect, useRef } from 'react';
+import {
+  BookOpen,
+  LayoutGrid,
+  Save,
+  Settings,
+  Swords,
+  Upload,
+} from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import {
   exportGrimorioCompletoJSON,
@@ -147,7 +155,9 @@ export const HomeMenu: React.FC = () => {
           >
             <span className={styles.badgeCount}>{arsenalCount} armas</span>
             <span className={styles.hotkey}>1</span>
-            <span className={styles.icon}>&#128214;</span>
+            <span className={styles.icon} style={{ display: 'inline-flex' }}>
+              <BookOpen size={26} strokeWidth={1.5} />
+            </span>
             <span className={styles.label}>Glossário</span>
             <span className={styles.desc}>Armas, Monstros &amp; Lore</span>
           </button>
@@ -160,7 +170,9 @@ export const HomeMenu: React.FC = () => {
           >
             <span className={styles.badgeCount}>{fichasList.length}</span>
             <span className={styles.hotkey}>2</span>
-            <span className={styles.icon}>&#9876;</span>
+            <span className={styles.icon} style={{ display: 'inline-flex' }}>
+              <Swords size={26} strokeWidth={1.5} />
+            </span>
             <span className={styles.label}>Fichas</span>
             <span className={styles.desc}>Heróis &amp; Vilões</span>
           </button>
@@ -172,7 +184,9 @@ export const HomeMenu: React.FC = () => {
             onClick={() => setSystemGuideModalOpen(true)}
           >
             <span className={styles.hotkey}>3</span>
-            <span className={styles.icon}>&#9881;</span>
+            <span className={styles.icon} style={{ display: 'inline-flex' }}>
+              <Settings size={26} strokeWidth={1.5} />
+            </span>
             <span className={styles.label}>Sistema</span>
             <span className={styles.desc}>Leis do Mundo</span>
           </button>
@@ -185,7 +199,9 @@ export const HomeMenu: React.FC = () => {
           >
             <span className={styles.badgeCount}>{boardUnitCount} unid.</span>
             <span className={styles.hotkey}>4</span>
-            <span className={styles.icon}>&#9820;</span>
+            <span className={styles.icon} style={{ display: 'inline-flex' }}>
+              <LayoutGrid size={26} strokeWidth={1.5} />
+            </span>
             <span className={styles.label}>Tabuleiro</span>
             <span className={styles.desc}>Campo de Batalha</span>
           </button>
@@ -197,7 +213,9 @@ export const HomeMenu: React.FC = () => {
             onClick={handleSalvar}
           >
             <span className={styles.hotkey}>5</span>
-            <span className={styles.icon}>&#10022;</span>
+            <span className={styles.icon} style={{ display: 'inline-flex' }}>
+              <Save size={26} strokeWidth={1.5} />
+            </span>
             <span className={styles.label}>Salvar</span>
             <span className={styles.desc}>Guardar Progresso</span>
           </button>
@@ -209,7 +227,9 @@ export const HomeMenu: React.FC = () => {
             onClick={() => fileInputRef.current?.click()}
           >
             <span className={styles.hotkey}>6</span>
-            <span className={styles.icon}>&#9672;</span>
+            <span className={styles.icon} style={{ display: 'inline-flex' }}>
+              <Upload size={26} strokeWidth={1.5} />
+            </span>
             <span className={styles.label}>Carregar</span>
             <span className={styles.desc}>Restaurar Dados</span>
           </button>

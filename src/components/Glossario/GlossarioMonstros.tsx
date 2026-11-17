@@ -1,14 +1,34 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Box,
+  ChevronLeft,
+  Cog,
   Copy,
   Download,
+  Droplet,
+  Droplets,
+  Flame,
+  Gem,
+  LayoutGrid,
+  Leaf,
+  MapPin,
+  Moon,
+  Mountain,
+  Music,
+  Orbit,
   Plus,
   Skull,
+  Snowflake,
+  Sparkles,
+  Stars,
   Swords,
   Trash2,
   Upload,
+  Wind,
   X,
+  Zap,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import { BestiaryMonster } from '../../bestiary/bestiaryTypes';
 import {
@@ -27,6 +47,44 @@ import { TokenAvatar } from '../common/TokenAvatar';
 import styles from './GlossarioMonstros.module.css';
 
 type ElementoFiltro = 'ALL' | string;
+
+/** Ícone (lucide) de cada elemento — substitui os emojis coloridos. */
+const ELEMENTO_ICONE: Record<string, LucideIcon> = {
+  Fogo: Flame,
+  'Água': Droplets,
+  Terra: Mountain,
+  Ar: Wind,
+  Raio: Zap,
+  Gelo: Snowflake,
+  Gravidade: Orbit,
+  Som: Music,
+  Sangue: Droplet,
+  Veneno: Skull,
+  Planta: Leaf,
+  Metal: Cog,
+  Sagrado: Sparkles,
+  Sombrio: Moon,
+  'Dimensão': Box,
+  Cristal: Gem,
+  'Éter': Stars,
+};
+
+const ElementoIcone: React.FC<{
+  id?: string;
+  size?: number;
+  color?: string;
+}> = ({ id, size = 12, color }) => {
+  const Icon = (id && ELEMENTO_ICONE[id]) || Skull;
+  return (
+    <Icon
+      size={size}
+      color={color}
+      strokeWidth={1.8}
+      style={{ flexShrink: 0 }}
+      aria-hidden="true"
+    />
+  );
+};
 
 export const GlossarioMonstros: React.FC = () => {
   const bestiaryCatalog = useGameStore((s) => s.bestiaryCatalog);
@@ -308,7 +366,7 @@ export const GlossarioMonstros: React.FC = () => {
               className={styles.btnSecondary}
               onClick={() => setActiveScreen('glossario')}
             >
-              &#9664; Glossário
+              <ChevronLeft size={13} /> Glossário
             </button>
             <button
               type="button"
@@ -324,7 +382,7 @@ export const GlossarioMonstros: React.FC = () => {
               className={styles.btnPrimary}
               onClick={() => setActiveScreen('tabuleiro')}
             >
-              &#9820; Tabuleiro
+              <LayoutGrid size={13} /> Tabuleiro
             </button>
           </div>
         </header>
@@ -400,8 +458,14 @@ export const GlossarioMonstros: React.FC = () => {
                       elementoFiltro === el.id ? styles.filterChipActive : ''
                     }`}
                     onClick={() => setElementoFiltro(el.id)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                    }}
                   >
-                    {el.simbolo} {el.id}
+                    <ElementoIcone id={el.id} size={12} color={el.cor} />{' '}
+                    {el.id}
                   </button>
                 ))}
               </div>
@@ -491,12 +555,15 @@ export const GlossarioMonstros: React.FC = () => {
                           fallbackText={draft.nome}
                         />
                       ) : (
-                        <span aria-hidden="true">
-                          {draft.elementos.length > 0
-                            ? ELEMENTOS.find(
-                                (e) => e.id === draft.elementos[0]
-                              )?.simbolo || '☠'
-                            : '☠'}
+                        <span
+                          aria-hidden="true"
+                          style={{ display: 'inline-flex' }}
+                        >
+                          <ElementoIcone
+                            id={draft.elementos[0]}
+                            size={30}
+                            color="var(--color-dourado-400)"
+                          />
                         </span>
                       )}
                     </div>
@@ -621,7 +688,13 @@ export const GlossarioMonstros: React.FC = () => {
                         )}
                         {draft.regioes.map((r) => (
                           <span key={r} className={styles.tag}>
-                            <span aria-hidden="true">&#128205;</span> {r}
+                            <span
+                              aria-hidden="true"
+                              style={{ display: 'inline-flex', alignItems: 'center' }}
+                            >
+                              <MapPin size={11} />
+                            </span>{' '}
+                            {r}
                             <button
                               type="button"
                               className={styles.tagRemove}
@@ -931,17 +1004,28 @@ export const GlossarioMonstros: React.FC = () => {
                           className={`${styles.elementChip} ${
                             ativo ? styles.elementChipActive : ''
                           }`}
-                          style={
-                            ativo
-                              ? {
-                                  background: el.cor,
-                                  borderColor: el.cor,
-                                }
-                              : undefined
-                          }
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            ...(ativo
+                              ? { background: el.cor, borderColor: el.cor }
+                              : {}),
+                          }}
                           onClick={() => toggleElemento(el.id)}
                         >
-                          <span aria-hidden="true">{el.simbolo}</span>
+                          <span
+                            aria-hidden="true"
+                            style={{ display: 'inline-flex' }}
+                          >
+                            <ElementoIcone
+                              id={el.id}
+                              size={13}
+                              color={
+                                ativo ? 'rgba(24, 16, 6, 0.85)' : el.cor
+                              }
+                            />
+                          </span>
                           {el.id}
                         </button>
                       );

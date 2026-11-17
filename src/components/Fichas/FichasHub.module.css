@@ -294,6 +294,10 @@
   border: 1px solid rgba(196, 137, 26, 0.5);
   border-radius: 4px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .boardSendBtn:hover {
@@ -309,6 +313,10 @@
   border: 1px solid rgba(187, 169, 139, 0.22);
   border-radius: 4px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .deleteBtn:hover {
@@ -342,6 +350,10 @@
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .backBtn:hover {

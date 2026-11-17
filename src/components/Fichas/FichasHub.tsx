@@ -1,4 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import {
+  ChevronLeft,
+  LayoutGrid,
+  PenLine,
+  Plus,
+  RefreshCw,
+  Swords,
+  X,
+} from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import {
   calcularFicha,
@@ -112,7 +121,9 @@ export const FichasHub: React.FC = () => {
             className={styles.modeBtn}
             onClick={() => openFichaEditor(null)}
           >
-            <span className={styles.icon}>&#10010;</span>
+            <span className={styles.icon} style={{ display: 'inline-flex' }}>
+              <Plus size={26} strokeWidth={1.5} />
+            </span>
             <span className={styles.btnTitle}>Criar Ficha</span>
             <span className={styles.btnDesc}>Novo Herói</span>
           </button>
@@ -127,7 +138,9 @@ export const FichasHub: React.FC = () => {
               setListMode(listMode === 'editar' ? 'none' : 'editar');
             }}
           >
-            <span className={styles.icon}>&#9998;</span>
+            <span className={styles.icon} style={{ display: 'inline-flex' }}>
+              <PenLine size={26} strokeWidth={1.5} />
+            </span>
             <span className={styles.btnTitle}>Editar Ficha</span>
             <span className={styles.btnDesc}>
               Alterar Dados ({fichasList.length})
@@ -144,7 +157,9 @@ export const FichasHub: React.FC = () => {
               setListMode(listMode === 'jogar' ? 'none' : 'jogar');
             }}
           >
-            <span className={styles.icon}>&#9876;</span>
+            <span className={styles.icon} style={{ display: 'inline-flex' }}>
+              <Swords size={26} strokeWidth={1.5} />
+            </span>
             <span className={styles.btnTitle}>Jogar</span>
             <span className={styles.btnDesc}>Mesa Dividida (1–2)</span>
           </button>
@@ -244,8 +259,21 @@ export const FichasHub: React.FC = () => {
                             className={styles.boardSendBtn}
                             onClick={(e) => handleSendToBoard(e, ficha.id)}
                             title="Converte perícias, arma e magias e posiciona no Tabuleiro Tático"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6,
+                            }}
                           >
-                            {alreadyInBoard ? '↻ Sinc. Tabuleiro' : '♜ No Tabuleiro'}
+                            {alreadyInBoard ? (
+                              <>
+                                <RefreshCw size={12} /> Sinc. Tabuleiro
+                              </>
+                            ) : (
+                              <>
+                                <LayoutGrid size={12} /> No Tabuleiro
+                              </>
+                            )}
                           </button>
                           <button
                             type="button"
@@ -257,9 +285,11 @@ export const FichasHub: React.FC = () => {
                             onClick={(e) => handleDeleteClick(e, ficha.id)}
                             title="Remover ficha"
                           >
-                            {confirmDeleteId === ficha.id
-                              ? 'Confirmar?'
-                              : '✕'}
+                            {confirmDeleteId === ficha.id ? (
+                              'Confirmar?'
+                            ) : (
+                              <X size={12} />
+                            )}
                           </button>
                         </div>
                       )}
@@ -279,15 +309,21 @@ export const FichasHub: React.FC = () => {
             className={styles.backBtn}
             onClick={() => setActiveScreen('home')}
           >
-            &#9664; Voltar ao Grimório
+            <ChevronLeft size={13} /> Voltar ao Grimório
           </button>
           <button
             type="button"
             className={styles.boardSendBtn}
-            style={{ padding: '8px 16px', fontSize: 11.5 }}
+            style={{
+              padding: '8px 16px',
+              fontSize: 11.5,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
             onClick={() => setActiveScreen('tabuleiro')}
           >
-            ♜ Abrir Tabuleiro Tático
+            <LayoutGrid size={13} /> Abrir Tabuleiro Tático
           </button>
         </footer>
       </div>

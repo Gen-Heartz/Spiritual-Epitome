@@ -901,6 +901,14 @@ export const useGameStore = create<GameStore>((set, get) => {
           );
           if (!livre) pos = null;
         }
+        if (!pos && !opts.characterId) {
+          // Troca manual pelo seletor de mapas: unidades sem posição guardada
+          // neste destino são colocadas perto do centro (nunca somem).
+          pos = primeiraCelulaLivre(novoBoard, novosPersonagens, ch, {
+            x: Math.floor(destino.largura / 2),
+            y: Math.floor(destino.altura / 2),
+          });
+        }
         novosPersonagens[cid] = { ...ch, position: pos };
       }
 

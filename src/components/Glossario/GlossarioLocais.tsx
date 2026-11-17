@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { ChevronLeft, Globe, LayoutGrid, Map } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import styles from './GlossarioHub.module.css';
 
@@ -61,7 +62,9 @@ export const GlossarioLocais: React.FC = () => {
           >
             <span className={styles.badge}>{totalMapas} mapas</span>
             <span className={styles.hotkey}>1</span>
-            <span className={styles.icon}>&#9968;</span>
+            <span className={styles.icon} style={{ display: 'inline-flex' }}>
+              <Map size={26} strokeWidth={1.5} />
+            </span>
             <span className={styles.btnTitle}>Mapas</span>
             <span className={styles.btnDesc}>
               Editor de Tabuleiro, Escadas &amp; Preset de Visão
@@ -78,7 +81,9 @@ export const GlossarioLocais: React.FC = () => {
           >
             <span className={styles.badgeSoon}>Em breve</span>
             <span className={styles.hotkey}>2</span>
-            <span className={styles.icon}>&#127757;</span>
+            <span className={styles.icon} style={{ display: 'inline-flex' }}>
+              <Globe size={26} strokeWidth={1.5} />
+            </span>
             <span className={styles.btnTitle}>Regiões</span>
             <span className={styles.btnDesc}>Reinos, Biomas &amp; Fronteiras</span>
           </button>
@@ -92,14 +97,14 @@ export const GlossarioLocais: React.FC = () => {
             className={styles.backBtn}
             onClick={() => setActiveScreen('glossario')}
           >
-            &#9664; Voltar ao Glossário
+            <ChevronLeft size={13} /> Voltar ao Glossário
           </button>
           <button
             type="button"
             className={styles.shortcutBtn}
             onClick={() => setActiveScreen('tabuleiro')}
           >
-            &#9820; Ir para o Tabuleiro
+            <LayoutGrid size={13} /> Ir para o Tabuleiro
           </button>
         </footer>
       </div>

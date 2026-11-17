@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -7,6 +7,8 @@ import {
   FolderOpen,
   LocateFixed,
   Mountain,
+  Lock,
+  Map,
   Moon,
   MousePointer,
   Redo2,
@@ -24,6 +26,7 @@ import {
   ZoomOut,
 } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
+import { listarMapas } from '../../maps/mapEngine';
 import styles from './TopToolbar.module.css';
 
 export const TopToolbar: React.FC = () => {
@@ -49,16 +52,15 @@ export const TopToolbar: React.FC = () => {
   const setFogMode = useGameStore((s) => s.setFogMode);
   const setFogRangeMode = useGameStore((s) => s.setFogRangeMode);
   const setFogGlobalRange = useGameStore((s) => s.setFogGlobalRange);
+  const switchMap = useGameStore((s) => s.switchMap);
 
   const [dimW, setDimW] = useState(String(appState.board.width));
   const [dimH, setDimH] = useState(String(appState.board.height));
 
-  // Mapa ativo (Glossário → Locais → Mapas)
+  // Seletor de mapas do tabuleiro (Glossário → Locais → Mapas)
   const activeMapId = useGameStore((s) => s.activeMapId);
   const mapCatalog = useGameStore((s) => s.mapCatalog);
-  const activeMap = activeMapId ? mapCatalog.maps[activeMapId] ?? null : null;
-  const activeMapName =
-    activeMap?.nome ?? (activeMapId ? 'Mapa do Tabuleiro' : null);
+  const mapList = useMemo(() => listarMapas(mapCatalog), [mapCatalog]);
 
   const fogMode = appState.settings.fogMode ?? 'day';
   // Mapa ativo com predefinição de visão trancada: controlos desativados em jogo
@@ -118,15 +120,31 @@ export const TopToolbar: React.FC = () => {
           <Shield size={15} color="#ecc050" />
           <span className={styles.brandTitle}>TABULEIRO</span>
           <span className={styles.matchSubtitle}>• {appState.matchName}</span>
-          {activeMapName && (
-            <span
-              className={styles.mapChip}
-              title="Mapa ativo — editar em Glossário → Locais → Mapas"
-            >
-              &#9968; {activeMapName}
-            </span>
-          )}
         </button>
+
+        {mapList.length > 0 && (
+          <div
+            className={styles.mapSelectBox}
+            title="Mapa do tabuleiro — troque entre os mapas criados em Glossário → Locais → Mapas"
+          >
+            <Map size={13} />
+            <select
+              className={styles.mapSelect}
+              value={activeMapId ?? ''}
+              onChange={(e) => {
+                const id = e.target.value;
+                if (id && id !== activeMapId) switchMap(id);
+              }}
+            >
+              {!activeMapId && <option value="">Sem mapa</option>}
+              {mapList.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.nome} ({m.largura}×{m.altura})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className={styles.divider} />
 
@@ -215,8 +233,16 @@ export const TopToolbar: React.FC = () => {
             <span>Exploração</span>
           </button>
           {fogLocked && (
-            <span style={{ fontSize: 11, opacity: 0.85, paddingRight: 4 }}>
-              &#128274;
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                paddingRight: 4,
+                opacity: 0.85,
+              }}
+              title="Visão trancada pela predefinição deste mapa"
+            >
+              <Lock size={12} />
             </span>
           )}
         </div>

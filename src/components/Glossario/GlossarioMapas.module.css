@@ -342,11 +342,17 @@
 .stairUp {
   color: #86efac;
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .stairDown {
   color: #fca5a5;
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cellFog {

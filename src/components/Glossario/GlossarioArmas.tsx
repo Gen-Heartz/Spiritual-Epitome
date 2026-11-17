@@ -1,9 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ChevronLeft,
   Copy,
   Edit3,
+  LayoutGrid,
   Plus,
   Sparkles,
+  Swords,
   Trash2,
   Upload,
 } from 'lucide-react';
@@ -275,21 +278,21 @@ export const GlossarioArmas: React.FC = () => {
               className={styles.btnSecondary}
               onClick={() => setActiveScreen('glossario')}
             >
-              &#9664; Glossário
+              <ChevronLeft size={13} /> Glossário
             </button>
             <button
               type="button"
               className={styles.btnSecondary}
               onClick={() => setActiveScreen('fichas')}
             >
-              &#9876; Fichas (Mochila)
+              <Swords size={13} /> Fichas (Mochila)
             </button>
             <button
               type="button"
               className={styles.btnPrimary}
               onClick={() => setActiveScreen('tabuleiro')}
             >
-              &#9820; Tabuleiro
+              <LayoutGrid size={13} /> Tabuleiro
             </button>
           </div>
         </header>
@@ -659,8 +662,15 @@ export const GlossarioArmas: React.FC = () => {
                         return (
                           <div key={atk.id} className={styles.attackCard}>
                             <div style={{ minWidth: 0 }}>
-                              <div className={styles.attackTitle}>
-                                &#9876; {atk.name}
+                              <div
+                                className={styles.attackTitle}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 5,
+                                }}
+                              >
+                                <Swords size={12} /> {atk.name}
                               </div>
                               <div className={styles.attackSub}>
                                 Alcance {atk.range}q • {atk.impactType || 'Impacto'} •{' '}

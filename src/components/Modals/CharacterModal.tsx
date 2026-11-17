@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Upload, UserPlus, X } from 'lucide-react';
+import { Swords, Upload, UserPlus, X } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import { Character, Direction } from '../../types';
 import { DIRECTION_LABELS } from '../../engine/geometry';
@@ -363,8 +363,13 @@ export const CharacterModal: React.FC = () => {
                       weaponIds.includes(wp.id) ? styles.chipActive : ''
                     }`}
                     onClick={() => toggleWeapon(wp.id)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                    }}
                   >
-                    ⚔️ {wp.name} ({wp.category || 'Arma'})
+                    <Swords size={12} /> {wp.name} ({wp.category || 'Arma'})
                   </button>
                 ))}
               </div>

@@ -1,12 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  ArrowDown,
+  ArrowUp,
+  ChevronLeft,
   Copy,
   Eraser,
   Eye,
   EyeOff,
+  LayoutGrid,
+  MapPin,
+  Moon,
   Mountain,
   Plus,
   Save,
+  Star,
+  Sun,
   Trash2,
   Trees,
 } from 'lucide-react';
@@ -29,7 +37,7 @@ import {
   gerarStairId,
   listarMapas,
   normalizarMapa,
-  simboloDirecao,
+  rotuloDirecao,
 } from '../../maps/mapEngine';
 import styles from './GlossarioMapas.module.css';
 
@@ -51,6 +59,7 @@ export const GlossarioMapas: React.FC = () => {
   const deleteMap = useGameStore((s) => s.deleteMap);
   const duplicateMap = useGameStore((s) => s.duplicateMap);
   const setDefaultMap = useGameStore((s) => s.setDefaultMap);
+  const switchMap = useGameStore((s) => s.switchMap);
   const showToast = useGameStore((s) => s.showToast);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -375,7 +384,7 @@ export const GlossarioMapas: React.FC = () => {
               className={styles.btnSecondary}
               onClick={() => setActiveScreen('glossario_locais')}
             >
-              &#9664; Locais
+              <ChevronLeft size={13} /> Locais
             </button>
             <button
               type="button"
@@ -387,9 +396,18 @@ export const GlossarioMapas: React.FC = () => {
             <button
               type="button"
               className={styles.btnPrimary}
-              onClick={() => setActiveScreen('tabuleiro')}
+              onClick={() => {
+                // Leva o mapa em edição para o modo de jogo
+                if (draft && draft.id !== activeMapId) switchMap(draft.id);
+                setActiveScreen('tabuleiro');
+              }}
+              title={
+                draft
+                  ? `Abrir o Tabuleiro com "${draft.nome}"`
+                  : 'Abrir o Tabuleiro'
+              }
             >
-              &#9820; Tabuleiro
+              <LayoutGrid size={13} /> Tabuleiro
             </button>
           </div>
         </header>
@@ -434,10 +452,30 @@ export const GlossarioMapas: React.FC = () => {
                       onClick={() => setSelectedId(m.id)}
                     >
                       <span style={{ minWidth: 0 }}>
-                        <span className={styles.mapItemName}>
-                          {isActive ? '📍 ' : ''}
+                        <span
+                          className={styles.mapItemName}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 5,
+                          }}
+                        >
+                          {isActive && (
+                            <MapPin
+                              size={12}
+                              style={{ flexShrink: 0 }}
+                              aria-label="Mapa em jogo"
+                            />
+                          )}
                           {m.nome}
-                          {isDefault ? ' ★' : ''}
+                          {isDefault && (
+                            <Star
+                              size={11}
+                              fill="currentColor"
+                              style={{ flexShrink: 0 }}
+                              aria-label="Mapa predefinido"
+                            />
+                          )}
                         </span>
                         <span className={styles.mapItemMeta}>
                           {m.largura}×{m.altura} • {m.stairs.length} escada
@@ -593,7 +631,7 @@ export const GlossarioMapas: React.FC = () => {
                         patch({ fog: { ...draft.fog, mode: 'day' } })
                       }
                     >
-                      ☀ Dia (mapa completo)
+                      <Sun size={13} /> Dia (mapa completo)
                     </button>
                     <button
                       type="button"
@@ -606,7 +644,7 @@ export const GlossarioMapas: React.FC = () => {
                         patch({ fog: { ...draft.fog, mode: 'exploration' } })
                       }
                     >
-                      ☾ Exploração (névoa)
+                      <Moon size={13} /> Exploração (névoa)
                     </button>
 
                     <label
@@ -732,7 +770,7 @@ export const GlossarioMapas: React.FC = () => {
                         onClick={() => setTool('stair_down')}
                         title="Colocar escada de descida"
                       >
-                        ▼ Escada (descer)
+                        <ArrowDown size={12} /> Escada (descer)
                       </button>
                       <button
                         type="button"
@@ -742,7 +780,7 @@ export const GlossarioMapas: React.FC = () => {
                         onClick={() => setTool('stair_up')}
                         title="Colocar escada de subida"
                       >
-                        ▲ Escada (subir)
+                        <ArrowUp size={12} /> Escada (subir)
                       </button>
                     </div>
                   </div>
@@ -822,7 +860,11 @@ export const GlossarioMapas: React.FC = () => {
                                     : styles.stairDown
                                 }
                               >
-                                {simboloDirecao(escada.direction)}
+                                {escada.direction === 'up' ? (
+                                  <ArrowUp size={12} />
+                                ) : (
+                                  <ArrowDown size={12} />
+                                )}
                               </span>
                             )}
                           </div>
@@ -984,8 +1026,8 @@ export const GlossarioMapas: React.FC = () => {
                                 })
                               }
                             >
-                              <option value="down">▼ Descer</option>
-                              <option value="up">▲ Subir</option>
+                              <option value="down">Descer</option>
+                              <option value="up">Subir</option>
                             </select>
 
                             <select
@@ -1048,7 +1090,7 @@ export const GlossarioMapas: React.FC = () => {
                               <option value="">Chegada automática</option>
                               {(destino?.stairs ?? []).map((ds) => (
                                 <option key={ds.id} value={ds.id}>
-                                  {simboloDirecao(ds.direction)} {ds.label} (
+                                  {rotuloDirecao(ds.direction)} — {ds.label} (
                                   {ds.x},{ds.y})
                                 </option>
                               ))}
@@ -1126,7 +1168,7 @@ export const GlossarioMapas: React.FC = () => {
                       showToast('Mapa definido como predefinição da partida.');
                     }}
                   >
-                    ★ Usar como predefinição
+                    <Star size={13} /> Usar como predefinição
                   </button>
                   <button
                     type="button"

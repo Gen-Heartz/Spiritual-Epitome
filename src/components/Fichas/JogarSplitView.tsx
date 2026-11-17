@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ChevronLeft, LayoutGrid } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import { FichaSheet } from './FichaSheet';
 
@@ -79,7 +80,11 @@ export const JogarSplitView: React.FC = () => {
             cursor: 'pointer',
           }}
         >
-          &#9664; Fichas
+          <ChevronLeft
+            size={12}
+            style={{ display: 'inline-block', verticalAlign: '-2px' }}
+          />{' '}
+          Fichas
         </button>
 
         <div
@@ -146,9 +151,12 @@ export const JogarSplitView: React.FC = () => {
             border: '1px solid var(--color-dourado-600)',
             borderRadius: 4,
             cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
           }}
         >
-          ♜ Combate no Tabuleiro
+          <LayoutGrid size={12} /> Combate no Tabuleiro
         </button>
       </header>
 

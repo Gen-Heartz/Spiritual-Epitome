@@ -1,4 +1,11 @@
 import React, { useEffect } from 'react';
+import {
+  ChevronLeft,
+  Flower2,
+  Map,
+  Skull,
+  Swords,
+} from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import styles from './GlossarioHub.module.css';
 
@@ -73,7 +80,9 @@ export const GlossarioHub: React.FC = () => {
           >
             <span className={styles.badge}>{totalArmas} armas</span>
             <span className={styles.hotkey}>1</span>
-            <span className={styles.icon}>&#9876;</span>
+            <span className={styles.icon} style={{ display: 'inline-flex' }}>
+              <Swords size={26} strokeWidth={1.5} />
+            </span>
             <span className={styles.btnTitle}>Armas</span>
             <span className={styles.btnDesc}>
               Arsenal Independente, Criação &amp; Ataques
@@ -88,7 +97,9 @@ export const GlossarioHub: React.FC = () => {
           >
             <span className={styles.badge}>{totalMonstros} monstros</span>
             <span className={styles.hotkey}>2</span>
-            <span className={styles.icon}>&#9760;</span>
+            <span className={styles.icon} style={{ display: 'inline-flex' }}>
+              <Skull size={26} strokeWidth={1.5} />
+            </span>
             <span className={styles.btnTitle}>Monstros</span>
             <span className={styles.btnDesc}>
               Bestiário, Pontos de Classificação &amp; Invocação
@@ -105,7 +116,9 @@ export const GlossarioHub: React.FC = () => {
           >
             <span className={styles.badgeSoon}>Em breve</span>
             <span className={styles.hotkey}>3</span>
-            <span className={styles.icon}>&#10048;</span>
+            <span className={styles.icon} style={{ display: 'inline-flex' }}>
+              <Flower2 size={26} strokeWidth={1.5} />
+            </span>
             <span className={styles.btnTitle}>Plantas</span>
             <span className={styles.btnDesc}>Herbário &amp; Alquimia</span>
           </button>
@@ -118,7 +131,9 @@ export const GlossarioHub: React.FC = () => {
           >
             <span className={styles.badge}>2 seções</span>
             <span className={styles.hotkey}>4</span>
-            <span className={styles.icon}>&#9968;</span>
+            <span className={styles.icon} style={{ display: 'inline-flex' }}>
+              <Map size={26} strokeWidth={1.5} />
+            </span>
             <span className={styles.btnTitle}>Locais</span>
             <span className={styles.btnDesc}>Mapas do Tabuleiro &amp; Regiões</span>
           </button>
@@ -132,7 +147,7 @@ export const GlossarioHub: React.FC = () => {
             className={styles.backBtn}
             onClick={() => setActiveScreen('home')}
           >
-            &#9664; Voltar ao Grimório
+            <ChevronLeft size={13} /> Voltar ao Grimório
           </button>
 
           <button
@@ -140,7 +155,7 @@ export const GlossarioHub: React.FC = () => {
             className={styles.shortcutBtn}
             onClick={() => setActiveScreen('fichas')}
           >
-            &#9876; Ir para Fichas
+            <Swords size={13} /> Ir para Fichas
           </button>
         </footer>
       </div>
