@@ -54,6 +54,7 @@ export const BoardCanvas: React.FC = () => {
   const showZoneLegend = useGameStore((s) => s.showZoneLegend);
   const mapCatalog = useGameStore((s) => s.mapCatalog);
   const activeMapId = useGameStore((s) => s.activeMapId);
+  const switchMap = useGameStore((s) => s.switchMap);
   const cameraResetNonce = useGameStore((s) => s.cameraResetNonce);
   const zoomStepRequest = useGameStore((s) => s.zoomStepRequest);
 
@@ -1907,6 +1908,30 @@ export const BoardCanvas: React.FC = () => {
               ? ` → ${mapCatalog.maps[escadaDaUnidade.targetMapId]?.nome ?? 'mapa removido'}`
               : ' • sem ligação definida'}
           </span>
+          {escadaDaUnidade.targetMapId &&
+            mapCatalog.maps[escadaDaUnidade.targetMapId] &&
+            selectedCharacterId && (
+              <button
+                type="button"
+                className={styles.stairHudAction}
+                onClick={() =>
+                  switchMap(escadaDaUnidade.targetMapId as string, {
+                    characterId: selectedCharacterId,
+                    arrivalStairId: escadaDaUnidade.targetStairId,
+                  })
+                }
+                title="Mudar de andar agora sem arrastar a unidade"
+              >
+                {escadaDaUnidade.direction === 'up' ? (
+                  <ArrowUp size={12} />
+                ) : (
+                  <ArrowDown size={12} />
+                )}
+                <span>
+                  {escadaDaUnidade.direction === 'up' ? 'Subir' : 'Descer'} agora
+                </span>
+              </button>
+            )}
         </div>
       )}
 

@@ -1,8 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  ArrowDown,
+  ArrowUp,
+  Check,
   Download,
   FolderOpen,
   HardDrive,
+  Layers,
+  MapPin,
   Plus,
   Sparkles,
   Trash2,
@@ -25,6 +30,7 @@ import {
   listMatchRecords,
   listWeaponTemplates,
 } from '../../db/database';
+import { listarPastas, mapasDaPasta, mapasDoConjunto } from '../../maps/mapEngine';
 import { TokenAvatar } from '../common/TokenAvatar';
 import styles from './ModalShared.module.css';
 
@@ -43,9 +49,18 @@ export const MatchesModal: React.FC = () => {
   const upsertWeapon = useGameStore((s) => s.upsertWeapon);
   const upsertAttack = useGameStore((s) => s.upsertAttack);
   const refreshStorageEstimate = useGameStore((s) => s.refreshStorageEstimate);
+  const mapCatalog = useGameStore((s) => s.mapCatalog);
+  const activeMapId = useGameStore((s) => s.activeMapId);
+  const activeFolderId = useGameStore((s) => s.activeFolderId);
+  const switchMap = useGameStore((s) => s.switchMap);
+  const setActiveFolder = useGameStore((s) => s.setActiveFolder);
+  const setActiveScreen = useGameStore((s) => s.setActiveScreen);
+  const openMapFloorsModal = useGameStore((s) => s.openMapFloorsModal);
   const showToast = useGameStore((s) => s.showToast);
 
-  const [tab, setTab] = useState<'matches' | 'templates' | 'export'>('matches');
+  const [tab, setTab] = useState<
+    'matches' | 'templates' | 'export' | 'maps'
+  >('matches');
   const [matches, setMatches] = useState<SavedMatchRecord[]>([]);
   const [charTemplates, setCharTemplates] = useState<CharacterTemplateRecord[]>([]);
   const [weaponTemplates, setWeaponTemplates] = useState<WeaponTemplateRecord[]>([]);
@@ -75,6 +90,9 @@ export const MatchesModal: React.FC = () => {
     setImportError(null);
     reloadLists();
   }, [modal.open, modal.initialTab]);
+
+  const pastasMapas = listarPastas(mapCatalog);
+  const mapasConjunto = mapasDoConjunto(mapCatalog, activeMapId);
 
   if (!modal.open) return null;
 
@@ -205,6 +223,15 @@ export const MatchesModal: React.FC = () => {
             >
               Modelos de Personagens & Armas (
               {charTemplates.length + weaponTemplates.length})
+            </button>
+            <button
+              type="button"
+              className={`${styles.chip} ${
+                tab === 'maps' ? styles.chipActive : ''
+              }`}
+              onClick={() => setTab('maps')}
+            >
+              Mapas &amp; Pastas ({mapasConjunto.length})
             </button>
             <button
               type="button"
@@ -503,6 +530,177 @@ export const MatchesModal: React.FC = () => {
                 )}
               </div>
             </div>
+          )}
+
+          {/* ABA 4: MAPAS & PASTAS (andares ligados da partida) */}
+          {tab === 'maps' && (
+            <>
+              <div className={styles.card}>
+                <div style={{ fontWeight: 700, color: 'var(--gold-bright)' }}>
+                  Pasta de mapas ligados da partida
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                  A pasta reúne os andares que comunicam por escadas. Ao carregar
+                  um mapa, o tabuleiro passa a mostrar só as unidades desse
+                  andar — as restantes ficam guardadas no andar delas.
+                </div>
+
+                <div className={styles.chipRow}>
+                  {pastasMapas.map((p) => {
+                    const qtd = mapasDaPasta(mapCatalog, p.id).length;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        className={`${styles.chip} ${
+                          p.id === activeFolderId ? styles.chipActive : ''
+                        }`}
+                        onClick={() => setActiveFolder(p.id)}
+                        title={`Carregar a pasta "${p.nome}" (${qtd} mapas)`}
+                      >
+                        <Layers size={12} style={{ marginRight: 4 }} />
+                        {p.nome} ({qtd})
+                      </button>
+                    );
+                  })}
+                  {pastasMapas.length === 0 && (
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                      Ainda não há pastas. Cria-as em Glossário → Locais →
+                      Mapas.
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className={styles.card}>
+                <div className={styles.label}>
+                  Mapas do conjunto ativo ({mapasConjunto.length})
+                </div>
+
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', gap: 7 }}
+                >
+                  {mapasConjunto.map((m) => {
+                    const atual = m.id === activeMapId;
+                    return (
+                      <div
+                        key={m.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 10,
+                          padding: '8px 10px',
+                          borderRadius: 6,
+                          border: `1px solid ${
+                            atual
+                              ? 'var(--border-strong)'
+                              : 'rgba(148,163,184,0.2)'
+                          }`,
+                          background: atual
+                            ? 'rgba(201,166,92,0.12)'
+                            : 'rgba(18,22,28,0.55)',
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            minWidth: 0,
+                          }}
+                        >
+                          {atual ? (
+                            <MapPin size={14} color="#ecc050" />
+                          ) : (
+                            <Layers size={14} color="#94a3b8" />
+                          )}
+                          <span style={{ minWidth: 0 }}>
+                            <div
+                              style={{ fontSize: 12.5, fontWeight: 600 }}
+                            >
+                              {m.nome}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 11,
+                                color: 'var(--text-muted)',
+                              }}
+                            >
+                              {m.largura}×{m.altura} •{' '}
+                              {m.stairs.some((st) => st.direction === 'up') && (
+                                <ArrowUp
+                                  size={10}
+                                  color="#86efac"
+                                  style={{ verticalAlign: 'middle' }}
+                                />
+                              )}
+                              {m.stairs.some((st) => st.direction === 'down') && (
+                                <ArrowDown
+                                  size={10}
+                                  color="#fca5a5"
+                                  style={{ verticalAlign: 'middle' }}
+                                />
+                              )}
+                              {m.stairs.length} escada
+                              {m.stairs.length === 1 ? '' : 's'} •{' '}
+                              {m.fog.mode === 'exploration'
+                                ? `Névoa ${m.fog.range}q`
+                                : 'Dia'}
+                              {atual ? ' • em jogo' : ''}
+                            </div>
+                          </span>
+                        </span>
+
+                        <button
+                          type="button"
+                          className={styles.btnSecondary}
+                          style={{ padding: '4px 10px', fontSize: 11 }}
+                          onClick={() => {
+                            if (!atual) switchMap(m.id);
+                            closeMatchesModal();
+                            setActiveScreen('tabuleiro');
+                          }}
+                          title={
+                            atual
+                              ? 'Ir para o tabuleiro neste mapa'
+                              : `Carregar "${m.nome}" no tabuleiro`
+                          }
+                        >
+                          {atual ? <Check size={12} /> : <Layers size={12} />}
+                          <span>{atual ? 'Em jogo' : 'Carregar'}</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+                  <button
+                    type="button"
+                    className={styles.btnSecondary}
+                    onClick={() => {
+                      closeMatchesModal();
+                      openMapFloorsModal();
+                    }}
+                  >
+                    <Layers size={13} />
+                    <span>Ver todos os andares</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.btnSecondary}
+                    onClick={() => {
+                      closeMatchesModal();
+                      setActiveScreen('glossario_mapas');
+                    }}
+                  >
+                    <FolderOpen size={13} />
+                    <span>Editar mapas &amp; pastas</span>
+                  </button>
+                </div>
+              </div>
+            </>
           )}
 
           {/* ABA 3: EXPORTAR / IMPORTAR JSON E MONITORAMENTO DE STORAGE */}

@@ -4,11 +4,14 @@ import {
   ArrowLeft,
   Crosshair,
   Eraser,
+  ArrowDown,
+  ArrowUp,
+  CornerUpLeft,
   FolderOpen,
+  Layers,
   LocateFixed,
   Mountain,
   Lock,
-  Map,
   Moon,
   MousePointer,
   Redo2,
@@ -26,7 +29,10 @@ import {
   ZoomOut,
 } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
-import { listarMapas } from '../../maps/mapEngine';
+import {
+  mapasDoConjunto,
+  vizinhosDeAndar,
+} from '../../maps/mapEngine';
 import styles from './TopToolbar.module.css';
 
 export const TopToolbar: React.FC = () => {
@@ -59,8 +65,53 @@ export const TopToolbar: React.FC = () => {
 
   // Seletor de mapas do tabuleiro (Glossário → Locais → Mapas)
   const activeMapId = useGameStore((s) => s.activeMapId);
+  const activeFolderId = useGameStore((s) => s.activeFolderId);
   const mapCatalog = useGameStore((s) => s.mapCatalog);
-  const mapList = useMemo(() => listarMapas(mapCatalog), [mapCatalog]);
+  const openMapFloorsModal = useGameStore((s) => s.openMapFloorsModal);
+  const lastMapId = useGameStore((s) => s.lastMapId);
+  const switchToPreviousMap = useGameStore((s) => s.switchToPreviousMap);
+
+  // Conjunto do mapa ativo: pasta de mapas ligados (ou mapas unidos por escadas)
+  const mapList = useMemo(
+    () => mapasDoConjunto(mapCatalog, activeMapId),
+    [mapCatalog, activeMapId]
+  );
+  const vizinhos = useMemo(
+    () => vizinhosDeAndar(mapCatalog, activeMapId),
+    [mapCatalog, activeMapId]
+  );
+  const pastaAtiva = activeFolderId
+    ? mapCatalog.folders[activeFolderId] ?? null
+    : null;
+
+  // Lista compacta: atual + andar superior + andar inferior
+  const mapaAtual = activeMapId ? mapCatalog.maps[activeMapId] ?? null : null;
+  const opcoesCompactas = useMemo(() => {
+    const vistos = new Set<string>();
+    const out: typeof mapList = [];
+    for (const m of [mapaAtual, vizinhos.acima, vizinhos.abaixo]) {
+      if (!m || vistos.has(m.id)) continue;
+      vistos.add(m.id);
+      out.push(m);
+    }
+    // Sem escadas de subida/descida: mostra os mapas mais próximos da pasta
+    if (out.length === 1) {
+      const idx = mapaAtual
+        ? mapList.findIndex((m) => m.id === mapaAtual.id)
+        : -1;
+      if (idx >= 0) {
+        for (const passo of [-1, 1]) {
+          const vizinho = mapList[idx + passo];
+          if (!vizinho || vistos.has(vizinho.id)) continue;
+          vistos.add(vizinho.id);
+          out.push(vizinho);
+          if (out.length >= 3) break;
+        }
+      }
+    }
+    return out;
+  }, [mapaAtual, vizinhos.acima, vizinhos.abaixo, mapList]);
+  const haMaisMapas = mapList.length > opcoesCompactas.length;
 
   const fogMode = appState.settings.fogMode ?? 'day';
   // Mapa ativo com predefinição de visão trancada: controlos desativados em jogo
@@ -122,12 +173,30 @@ export const TopToolbar: React.FC = () => {
           <span className={styles.matchSubtitle}>• {appState.matchName}</span>
         </button>
 
+        {lastMapId && lastMapId !== activeMapId && mapCatalog.maps[lastMapId] && (
+          <button
+            className={styles.actionBtn}
+            onClick={switchToPreviousMap}
+            title={`Voltar ao andar anterior: ${mapCatalog.maps[lastMapId].nome}`}
+          >
+            <CornerUpLeft size={14} />
+            <span>Andar anterior</span>
+          </button>
+        )}
+
         {mapList.length > 0 && (
           <div
             className={styles.mapSelectBox}
-            title="Mapa do tabuleiro — troque entre os mapas criados em Glossário → Locais → Mapas"
+            title={
+              pastaAtiva
+                ? `Pasta "${pastaAtiva.nome}" — andares ligados deste conjunto`
+                : 'Andares ligados por escadas'
+            }
           >
-            <Map size={13} />
+            <Layers size={13} />
+            {pastaAtiva && (
+              <span className={styles.folderChip}>{pastaAtiva.nome}</span>
+            )}
             <select
               className={styles.mapSelect}
               value={activeMapId ?? ''}
@@ -137,12 +206,50 @@ export const TopToolbar: React.FC = () => {
               }}
             >
               {!activeMapId && <option value="">Sem mapa</option>}
-              {mapList.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.nome} ({m.largura}×{m.altura})
-                </option>
-              ))}
+              {opcoesCompactas.map((m) => {
+                const papel =
+                  m.id === activeMapId
+                    ? 'Andar atual'
+                    : m.id === vizinhos.acima?.id
+                    ? '▲ Andar superior'
+                    : m.id === vizinhos.abaixo?.id
+                    ? '▼ Andar inferior'
+                    : 'Mapa da pasta';
+                return (
+                  <option key={m.id} value={m.id}>
+                    {papel}: {m.nome}
+                  </option>
+                );
+              })}
             </select>
+            {vizinhos.acima && vizinhos.acima.id !== activeMapId && (
+              <button
+                className={styles.floorBtn}
+                onClick={() => switchMap(vizinhos.acima!.id)}
+                title={`Subir para "${vizinhos.acima.nome}"`}
+              >
+                <ArrowUp size={13} />
+              </button>
+            )}
+            {vizinhos.abaixo && vizinhos.abaixo.id !== activeMapId && (
+              <button
+                className={styles.floorBtn}
+                onClick={() => switchMap(vizinhos.abaixo!.id)}
+                title={`Descer para "${vizinhos.abaixo.nome}"`}
+              >
+                <ArrowDown size={13} />
+              </button>
+            )}
+            {(haMaisMapas || mapList.length > 1) && (
+              <button
+                className={styles.floorBtn}
+                onClick={openMapFloorsModal}
+                title={`Ver todos os mapas deste conjunto (${mapList.length})`}
+              >
+                <Layers size={13} />
+                <span style={{ fontSize: 10.5 }}>{mapList.length}</span>
+              </button>
+            )}
           </div>
         )}
 

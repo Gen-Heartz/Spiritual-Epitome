@@ -7,6 +7,8 @@ import {
   Eraser,
   Eye,
   EyeOff,
+  FolderPlus,
+  Layers,
   LayoutGrid,
   MapPin,
   Moon,
@@ -17,11 +19,13 @@ import {
   Sun,
   Trash2,
   Trees,
+  X,
 } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import { Direction, TerrainType } from '../../types';
 import {
   GameMap,
+  MapFolder,
   MapStair,
   StairDirection,
 } from '../../maps/mapTypes';
@@ -36,6 +40,8 @@ import {
   escadaNaCelula,
   gerarStairId,
   listarMapas,
+  listarPastas,
+  mapasDaPasta,
   normalizarMapa,
   rotuloDirecao,
 } from '../../maps/mapEngine';
@@ -59,6 +65,13 @@ export const GlossarioMapas: React.FC = () => {
   const deleteMap = useGameStore((s) => s.deleteMap);
   const duplicateMap = useGameStore((s) => s.duplicateMap);
   const setDefaultMap = useGameStore((s) => s.setDefaultMap);
+  const createMapFolder = useGameStore((s) => s.createMapFolder);
+  const renameMapFolder = useGameStore((s) => s.renameMapFolder);
+  const deleteMapFolder = useGameStore((s) => s.deleteMapFolder);
+  const setMapFolder = useGameStore((s) => s.setMapFolder);
+  const agruparMapasNaMesmaPasta = useGameStore(
+    (s) => s.agruparMapasNaMesmaPasta
+  );
   const switchMap = useGameStore((s) => s.switchMap);
   const showToast = useGameStore((s) => s.showToast);
 
@@ -68,6 +81,13 @@ export const GlossarioMapas: React.FC = () => {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [previewFog, setPreviewFog] = useState(true);
   const [novaLigacaoMapa, setNovaLigacaoMapa] = useState<string>('');
+  const [novaPastaNome, setNovaPastaNome] = useState('');
+  const [mostrarNovaPasta, setMostrarNovaPasta] = useState(false);
+  const [pastaEmEdicao, setPastaEmEdicao] = useState<string | null>(null);
+  const [pastaEmEdicaoNome, setPastaEmEdicaoNome] = useState('');
+  const [pastaAberta, setPastaAberta] = useState<string | 'sem-pasta' | null>(
+    null
+  );
 
   useEffect(() => {
     refreshMaps();
@@ -84,6 +104,8 @@ export const GlossarioMapas: React.FC = () => {
   }, [setActiveScreen]);
 
   const allMaps = useMemo(() => listarMapas(mapCatalog), [mapCatalog]);
+  const pastas = useMemo(() => listarPastas(mapCatalog), [mapCatalog]);
+  const semPasta = useMemo(() => mapasDaPasta(mapCatalog, null), [mapCatalog]);
 
   useEffect(() => {
     if (selectedId && mapCatalog.maps[selectedId]) return;
@@ -101,6 +123,7 @@ export const GlossarioMapas: React.FC = () => {
       activeMap
         ? {
             ...activeMap,
+            folderId: activeMap.folderId ?? null,
             terrain: { ...activeMap.terrain },
             stairs: activeMap.stairs.map((s) => ({ ...s })),
             fog: { ...activeMap.fog },
@@ -123,9 +146,14 @@ export const GlossarioMapas: React.FC = () => {
     commit({ ...draft, ...partial }, silent);
   };
 
-  const handleCreate = () => {
+  const handleCreate = (folderId: string | null = null) => {
     const novo = criarMapaEmBranco(`Novo Mapa ${allMaps.length + 1}`);
-    upsertMap(novo);
+    upsertMap({
+      ...novo,
+      folderId:
+        folderId ?? (draft?.folderId ?? activeMap?.folderId ?? null),
+    });
+    if (folderId) setPastaAberta(folderId);
     setSelectedId(novo.id);
     showToast('Novo mapa criado. Define dimensões, terreno e escadas.');
   };
@@ -295,6 +323,7 @@ export const GlossarioMapas: React.FC = () => {
       targetMapId: destino.id,
       targetStairId: retorno ? retorno.id : null,
     });
+    agruparMapasNaMesmaPasta(draft.id, destino.id);
     showToast(`Mapa "${destino.nome}" criado com escada de retorno.`);
   };
 
@@ -319,6 +348,7 @@ export const GlossarioMapas: React.FC = () => {
       targetMapId: destinoComRetorno.id,
       targetStairId: retorno ? retorno.id : null,
     });
+    agruparMapasNaMesmaPasta(draft.id, destinoComRetorno.id);
     setNovaLigacaoMapa('');
     showToast(
       criada
@@ -365,6 +395,61 @@ export const GlossarioMapas: React.FC = () => {
     }
     return out;
   }, [draft?.largura, draft?.altura]);
+
+  /** Item da lista de mapas (usado dentro de cada pasta). */
+  const renderMapItem = (m: GameMap) => {
+    const orfas = m.stairs.filter(
+      (s) => !s.targetMapId || !mapCatalog.maps[s.targetMapId]
+    ).length;
+    const isActive = m.id === activeMapId;
+    const isDefault = m.id === mapCatalog.defaultMapId;
+    return (
+      <button
+        key={m.id}
+        type="button"
+        className={`${styles.mapItem} ${
+          m.id === selectedId ? styles.mapItemActive : ''
+        }`}
+        onClick={() => setSelectedId(m.id)}
+      >
+        <span style={{ minWidth: 0 }}>
+          <span
+            className={styles.mapItemName}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
+          >
+            {isActive && (
+              <MapPin
+                size={12}
+                style={{ flexShrink: 0 }}
+                aria-label="Mapa em jogo"
+              />
+            )}
+            {m.nome}
+            {isDefault && (
+              <Star
+                size={11}
+                fill="currentColor"
+                style={{ flexShrink: 0 }}
+                aria-label="Mapa predefinido"
+              />
+            )}
+          </span>
+          <span className={styles.mapItemMeta}>
+            {m.largura}×{m.altura} • {m.stairs.length} escada
+            {m.stairs.length === 1 ? '' : 's'} •{' '}
+            {m.fog.mode === 'exploration' ? `Névoa ${m.fog.range}q` : 'Dia'}
+          </span>
+        </span>
+        <span
+          className={`${styles.stairBadge} ${
+            orfas > 0 ? styles.stairBadgeWarn : ''
+          }`}
+        >
+          {orfas > 0 ? `${orfas} sem ligação` : 'OK'}
+        </span>
+      </button>
+    );
+  };
 
   return (
     <div className={styles.screen}>
@@ -423,7 +508,7 @@ export const GlossarioMapas: React.FC = () => {
                 type="button"
                 className={styles.btnPrimary}
                 style={{ padding: '5px 10px', fontSize: 10.5 }}
-                onClick={handleCreate}
+                onClick={() => handleCreate(null)}
               >
                 <Plus size={13} />
                 <span>Novo</span>
@@ -435,66 +520,203 @@ export const GlossarioMapas: React.FC = () => {
                 Nenhum mapa criado. Clica em “Novo” para começar.
               </div>
             ) : (
-              <div className={styles.mapList}>
-                {allMaps.map((m) => {
-                  const orfas = m.stairs.filter(
-                    (s) => !s.targetMapId || !mapCatalog.maps[s.targetMapId]
-                  ).length;
-                  const isActive = m.id === activeMapId;
-                  const isDefault = m.id === mapCatalog.defaultMapId;
-                  return (
+              <div className={styles.folderTree}>
+                {/* Criar pasta */}
+                {mostrarNovaPasta ? (
+                  <div className={styles.folderCreateRow}>
+                    <input
+                      className={styles.input}
+                      placeholder="Nome da pasta (ex.: Masmorra do Vale)"
+                      value={novaPastaNome}
+                      autoFocus
+                      onChange={(e) => setNovaPastaNome(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && novaPastaNome.trim()) {
+                          const id = createMapFolder(novaPastaNome.trim());
+                          setPastaAberta(id);
+                          setNovaPastaNome('');
+                          setMostrarNovaPasta(false);
+                          showToast('Pasta criada. Move ou cria mapas dentro dela.');
+                        }
+                        if (e.key === 'Escape') setMostrarNovaPasta(false);
+                      }}
+                    />
                     <button
-                      key={m.id}
                       type="button"
-                      className={`${styles.mapItem} ${
-                        m.id === selectedId ? styles.mapItemActive : ''
-                      }`}
-                      onClick={() => setSelectedId(m.id)}
+                      className={styles.btnPrimary}
+                      style={{ padding: '5px 9px', fontSize: 10.5 }}
+                      onClick={() => {
+                        if (!novaPastaNome.trim()) return;
+                        const id = createMapFolder(novaPastaNome.trim());
+                        setPastaAberta(id);
+                        setNovaPastaNome('');
+                        setMostrarNovaPasta(false);
+                        showToast('Pasta criada. Move ou cria mapas dentro dela.');
+                      }}
                     >
-                      <span style={{ minWidth: 0 }}>
-                        <span
-                          className={styles.mapItemName}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 5,
-                          }}
-                        >
-                          {isActive && (
-                            <MapPin
-                              size={12}
-                              style={{ flexShrink: 0 }}
-                              aria-label="Mapa em jogo"
-                            />
-                          )}
-                          {m.nome}
-                          {isDefault && (
-                            <Star
-                              size={11}
-                              fill="currentColor"
-                              style={{ flexShrink: 0 }}
-                              aria-label="Mapa predefinido"
-                            />
-                          )}
-                        </span>
-                        <span className={styles.mapItemMeta}>
-                          {m.largura}×{m.altura} • {m.stairs.length} escada
-                          {m.stairs.length === 1 ? '' : 's'} •{' '}
-                          {m.fog.mode === 'exploration'
-                            ? `Névoa ${m.fog.range}q`
-                            : 'Dia'}
-                        </span>
-                      </span>
-                      <span
-                        className={`${styles.stairBadge} ${
-                          orfas > 0 ? styles.stairBadgeWarn : ''
+                      Criar
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.rowRemove}
+                      onClick={() => {
+                        setMostrarNovaPasta(false);
+                        setNovaPastaNome('');
+                      }}
+                      aria-label="Cancelar"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className={styles.folderCreateBtn}
+                    onClick={() => setMostrarNovaPasta(true)}
+                  >
+                    <FolderPlus size={13} />
+                    <span>Nova Pasta de Mapas</span>
+                  </button>
+                )}
+
+                {/* Pastas existentes */}
+                {pastas.map((pasta) => {
+                  const mapasDaPastaAtual = mapasDaPasta(mapCatalog, pasta.id);
+                  const aberta =
+                    pastaAberta === pasta.id ||
+                    (pastaAberta === null &&
+                      mapasDaPastaAtual.some((m) => m.id === selectedId));
+                  return (
+                    <div key={pasta.id} className={styles.folderGroup}>
+                      <div
+                        className={`${styles.folderHeader} ${
+                          aberta ? styles.folderHeaderOpen : ''
                         }`}
                       >
-                        {orfas > 0 ? `${orfas} sem ligação` : 'OK'}
-                      </span>
-                    </button>
+                        <button
+                          type="button"
+                          className={styles.folderToggle}
+                          onClick={() =>
+                            setPastaAberta(aberta ? null : pasta.id)
+                          }
+                          title={aberta ? 'Fechar pasta' : 'Abrir pasta'}
+                        >
+                          <Layers size={13} />
+                          {pastaEmEdicao === pasta.id ? (
+                            <input
+                              className={styles.folderNameInput}
+                              value={pastaEmEdicaoNome}
+                              autoFocus
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) =>
+                                setPastaEmEdicaoNome(e.target.value)
+                              }
+                              onBlur={() => {
+                                renameMapFolder(pasta.id, pastaEmEdicaoNome);
+                                setPastaEmEdicao(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  renameMapFolder(pasta.id, pastaEmEdicaoNome);
+                                  setPastaEmEdicao(null);
+                                }
+                                if (e.key === 'Escape') setPastaEmEdicao(null);
+                              }}
+                            />
+                          ) : (
+                            <span className={styles.folderNome}>
+                              {pasta.nome}
+                              <span className={styles.folderCount}>
+                                {mapasDaPastaAtual.length}
+                              </span>
+                            </span>
+                          )}
+                        </button>
+
+                        <div
+                          className={styles.folderActions}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            type="button"
+                            className={styles.iconMini}
+                            title="Renomear pasta"
+                            onClick={() => {
+                              setPastaEmEdicao(pasta.id);
+                              setPastaEmEdicaoNome(pasta.nome);
+                            }}
+                          >
+                            <Save size={11} />
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.iconMini}
+                            title="Novo mapa nesta pasta"
+                            onClick={() => handleCreate(pasta.id)}
+                          >
+                            <Plus size={12} />
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.iconMini}
+                            title="Apagar pasta (os mapas ficam sem pasta)"
+                            onClick={() => deleteMapFolder(pasta.id)}
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {aberta && (
+                        <div className={styles.folderMaps}>
+                          {mapasDaPastaAtual.length === 0 ? (
+                            <div className={styles.folderEmpty}>
+                              Pasta vazia — move mapas para aqui ou cria um novo.
+                            </div>
+                          ) : (
+                            mapasDaPastaAtual.map((m) => renderMapItem(m))
+                          )}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
+
+                {/* Sem pasta */}
+                <div className={styles.folderGroup}>
+                  <div className={styles.folderHeader}>
+                    <button
+                      type="button"
+                      className={styles.folderToggle}
+                      onClick={() =>
+                        setPastaAberta(
+                          pastaAberta === 'sem-pasta' ? null : 'sem-pasta'
+                        )
+                      }
+                    >
+                      <Layers size={13} />
+                      <span className={styles.folderNome}>
+                        Sem pasta
+                        <span className={styles.folderCount}>
+                          {semPasta.length}
+                        </span>
+                      </span>
+                    </button>
+                  </div>
+                  {(pastaAberta === 'sem-pasta' ||
+                    (pastaAberta === null &&
+                      semPasta.some((m) => m.id === selectedId))) && (
+                    <div className={styles.folderMaps}>
+                      {semPasta.length === 0 ? (
+                        <div className={styles.folderEmpty}>
+                          Todos os mapas estão em pastas.
+                        </div>
+                      ) : (
+                        semPasta.map((m) => renderMapItem(m))
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </aside>
@@ -536,6 +758,45 @@ export const GlossarioMapas: React.FC = () => {
                         }
                         onBlur={() => patch({ descricao: draft.descricao })}
                       />
+                    </div>
+                    <div className={styles.field}>
+                      <label className={styles.label}>Pasta de Mapas</label>
+                      <select
+                        className={styles.select}
+                        value={draft.folderId ?? ''}
+                        onChange={(e) => {
+                          const folderId = e.target.value || null;
+                          setDraft({ ...draft, folderId });
+                          setMapFolder(draft.id, folderId);
+                          if (folderId) setPastaAberta(folderId);
+                        }}
+                        title="Agrupa este mapa com os andares ligados"
+                      >
+                        <option value="">— Sem pasta —</option>
+                        {pastas.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.nome}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className={styles.field}>
+                      <label className={styles.label}>Nova pasta</label>
+                      <button
+                        type="button"
+                        className={styles.btnSecondary}
+                        style={{ height: 34 }}
+                        onClick={() => {
+                          const id = createMapFolder(`Pasta de ${draft.nome}`);
+                          setDraft({ ...draft, folderId: id });
+                          setMapFolder(draft.id, id);
+                          setPastaAberta(id);
+                          showToast('Pasta criada e associada a este mapa.');
+                        }}
+                      >
+                        <FolderPlus size={13} />
+                        <span>Criar pasta com este mapa</span>
+                      </button>
                     </div>
                   </div>
 
@@ -1063,6 +1324,7 @@ export const GlossarioMapas: React.FC = () => {
                                   targetMapId: valor,
                                   targetStairId: retorno ? retorno.id : null,
                                 });
+                                agruparMapasNaMesmaPasta(draft.id, valor);
                               }}
                               title="Mapa de destino"
                             >

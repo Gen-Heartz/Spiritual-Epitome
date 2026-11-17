@@ -25,6 +25,15 @@ export interface MapFogPreset {
   locked: boolean;
 }
 
+/** Pasta que agrupa mapas ligados (ex.: andares de uma mesma masmorra). */
+export interface MapFolder {
+  id: string;
+  nome: string;
+  /** Descrição opcional (ex.: "Masmorra do Vale") */
+  descricao: string;
+  criadoEm: number;
+}
+
 /** Um mapa do tabuleiro (documento independente, editável no Glossário). */
 export interface GameMap {
   id: string;
@@ -37,12 +46,16 @@ export interface GameMap {
   fog: MapFogPreset;
   /** Posições das unidades guardadas neste mapa, por id de personagem */
   placements: Record<string, { x: number; y: number }>;
+  /** Pasta a que o mapa pertence (mantém mapas ligados juntos) */
+  folderId: string | null;
   criadoEm: number;
   atualizadoEm: number;
 }
 
 export interface MapCatalog {
   maps: Record<string, GameMap>;
+  /** Pastas que agrupam mapas ligados (andares, níveis, salas) */
+  folders: Record<string, MapFolder>;
   /** Mapa usado por omissão quando a partida não referencia nenhum */
   defaultMapId: string | null;
 }

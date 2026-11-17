@@ -56,13 +56,20 @@ import {
 } from '../bestiary/bestiaryTypes';
 import { converterMonstroParaTabuleiro } from '../bestiary/bestiaryEngine';
 import { createDefaultBestiaryCatalog } from '../data/bestiaryPresets';
-import { GameMap, MapCatalog, MapStair } from '../maps/mapTypes';
 import {
+  GameMap,
+  MapCatalog,
+  MapFolder,
+  MapStair,
+} from '../maps/mapTypes';
+import {
+  agruparPastasLigadas,
   boardDoMapa,
   criarMapaEmBranco,
+  criarPasta,
   escadaSobUnidade,
   gerarStairId,
-  listarMapas,
+  mapasDoConjunto,
   normalizarCatalogoMapas,
   primeiraCelulaLivre,
   resolverChegada,
@@ -147,6 +154,34 @@ export function normalizeAppState(state: AppState): AppState {
   };
 }
 
+/**
+ * Resolve o andar (`mapId`) de cada unidade ao abrir uma partida:
+ * mantém o andar guardado, senão usa a posição atual ou a primeira
+ * colocação encontrada nos mapas conhecidos.
+ */
+export function atribuirAndares(
+  state: AppState,
+  catalog: MapCatalog,
+  activeMapId: string | null
+): AppState {
+  const personagens: Record<string, Character> = {};
+  for (const [cid, ch] of Object.entries(state.characters)) {
+    let mapId = ch.mapId && catalog.maps[ch.mapId] ? ch.mapId : null;
+    if (!mapId) {
+      if (ch.position && activeMapId) {
+        mapId = activeMapId;
+      } else {
+        const dono = Object.values(catalog.maps).find((m) =>
+          Boolean(m.placements?.[cid])
+        );
+        mapId = dono?.id ?? activeMapId;
+      }
+    }
+    personagens[cid] = { ...ch, mapId };
+  }
+  return { ...state, characters: personagens };
+}
+
 function cloneLastAttack(
   value: LastResolvedAttack | null | undefined
 ): LastResolvedAttack | null {
@@ -204,6 +239,10 @@ export interface GameStore {
   mapCatalog: MapCatalog;
   /** Mapa atualmente carregado no tabuleiro */
   activeMapId: string | null;
+  /** Pasta de mapas ligados usada pelo tabuleiro (Glossário → Locais → Mapas) */
+  activeFolderId: string | null;
+  /** Andar anterior (para o botão "voltar ao andar anterior") */
+  lastMapId: string | null;
   fichasList: EpitomeFicha[];
   editingFichaId: string | null;
   playingFichaIds: string[];
@@ -241,9 +280,11 @@ export interface GameStore {
   };
   matchesModal: {
     open: boolean;
-    initialTab: 'matches' | 'templates' | 'export';
+    initialTab: 'matches' | 'templates' | 'export' | 'maps';
   };
   settingsModalOpen: boolean;
+  /** Janela com todos os mapas do conjunto (andares) */
+  mapFloorsModalOpen: boolean;
 
   // Storage & Notificações
   storageEstimate: StorageEstimateInfo;
@@ -271,6 +312,22 @@ export interface GameStore {
   // Mapas & Escadas (Glossário -> Locais -> Mapas)
   refreshMaps: () => Promise<void>;
   upsertMap: (map: GameMap) => void;
+  /** Cria uma pasta de mapas e devolve o id */
+  createMapFolder: (nome: string, descricao?: string) => string;
+  renameMapFolder: (folderId: string, nome: string) => void;
+  /** Remove a pasta (os mapas ficam sem pasta, não são apagados) */
+  deleteMapFolder: (folderId: string) => void;
+  /** Move um mapa para uma pasta (null = sem pasta) */
+  setMapFolder: (mapId: string, folderId: string | null) => void;
+  /** Junta dois mapas na mesma pasta (cria uma se nenhum tiver) */
+  agruparMapasNaMesmaPasta: (mapIdA: string, mapIdB: string) => void;
+  /** Muda uma unidade de andar (fica na reserva desse andar) */
+  moveCharacterToFloor: (characterId: string, mapId: string | null) => void;
+  setActiveFolder: (folderId: string | null) => void;
+  openMapFloorsModal: () => void;
+  closeMapFloorsModal: () => void;
+  /** Volta ao andar anterior (atalho rápido de navegação) */
+  switchToPreviousMap: () => void;
   deleteMap: (mapId: string) => void;
   duplicateMap: (mapId: string) => string | null;
   setDefaultMap: (mapId: string) => void;
@@ -343,7 +400,7 @@ export interface GameStore {
     editAttackId?: string | null
   ) => void;
   closeAttackEditorModal: () => void;
-  openMatchesModal: (tab?: 'matches' | 'templates' | 'export') => void;
+  openMatchesModal: (tab?: 'matches' | 'templates' | 'export' | 'maps') => void;
   closeMatchesModal: () => void;
   setSettingsModalOpen: (open: boolean) => void;
 
@@ -460,8 +517,11 @@ export const useGameStore = create<GameStore>((set, get) => {
 
     arsenalCatalog: createDefaultArsenalCatalog(),
     bestiaryCatalog: createDefaultBestiaryCatalog(),
-    mapCatalog: { maps: {}, defaultMapId: null },
+    mapCatalog: { maps: {}, folders: {}, defaultMapId: null },
     activeMapId: null,
+    activeFolderId: null,
+    lastMapId: null,
+    mapFloorsModalOpen: false,
     fichasList: [],
     editingFichaId: null,
     playingFichaIds: [],
@@ -700,7 +760,14 @@ export const useGameStore = create<GameStore>((set, get) => {
           ? get().appState.board.id
           : catalog.defaultMapId ?? Object.keys(catalog.maps)[0] ?? null;
 
-      set({ mapCatalog: catalog, activeMapId });
+      set({
+        mapCatalog: catalog,
+        activeMapId,
+        lastMapId: null,
+        activeFolderId: activeMapId
+          ? catalog.maps[activeMapId]?.folderId ?? null
+          : null,
+      });
     },
 
     upsertMap: (mapa) => {
@@ -711,12 +778,18 @@ export const useGameStore = create<GameStore>((set, get) => {
         criadoEm: existente ? existente.criadoEm : mapa.criadoEm || Date.now(),
         atualizadoEm: Date.now(),
       };
-      const nextCatalog: MapCatalog = {
+      const nextCatalog: MapCatalog = agruparPastasLigadas({
         ...prevCatalog,
         maps: { ...prevCatalog.maps, [mapa.id]: normalizado },
         defaultMapId: prevCatalog.defaultMapId ?? mapa.id,
-      };
-      set({ mapCatalog: nextCatalog });
+      });
+      set({
+        mapCatalog: nextCatalog,
+        activeFolderId:
+          get().activeMapId === mapa.id
+            ? normalizado.folderId ?? get().activeFolderId
+            : get().activeFolderId,
+      });
       saveMapCatalog(nextCatalog).catch((e) =>
         console.error('Erro ao salvar mapas:', e)
       );
@@ -793,15 +866,37 @@ export const useGameStore = create<GameStore>((set, get) => {
 
       const nextCatalog: MapCatalog = {
         maps,
+        folders: prevCatalog.folders,
         defaultMapId:
           prevCatalog.defaultMapId === mapId
             ? Object.keys(maps)[0] ?? null
             : prevCatalog.defaultMapId,
       };
 
+      // Unidades que estavam no mapa apagado voltam ao andar ativo
+      const estadoAtual = get().appState;
+      const andarAtivo = get().activeMapId === mapId ? null : get().activeMapId;
+      const personagens: Record<string, Character> = {};
+      let orfaos = false;
+      for (const [cid, ch] of Object.entries(estadoAtual.characters)) {
+        if (ch.mapId !== mapId) {
+          personagens[cid] = ch;
+          continue;
+        }
+        personagens[cid] = {
+          ...ch,
+          mapId: andarAtivo,
+          position: andarAtivo ? ch.position : null,
+        };
+        orfaos = true;
+      }
+
       set({
         mapCatalog: nextCatalog,
-        activeMapId: get().activeMapId === mapId ? null : get().activeMapId,
+        activeMapId: andarAtivo,
+        appState: orfaos
+          ? { ...estadoAtual, characters: personagens }
+          : estadoAtual,
       });
       saveMapCatalog(nextCatalog).catch((e) =>
         console.error('Erro ao salvar mapas:', e)
@@ -852,6 +947,182 @@ export const useGameStore = create<GameStore>((set, get) => {
       );
     },
 
+    moveCharacterToFloor: (characterId, mapId) => {
+      const prev = get().appState;
+      const ch = prev.characters[characterId];
+      if (!ch) return;
+
+      const catalog = get().mapCatalog;
+      const maps: Record<string, GameMap> = {};
+      for (const [id, m] of Object.entries(catalog.maps)) {
+        if (!m.placements?.[characterId]) {
+          maps[id] = m;
+          continue;
+        }
+        const placements = { ...m.placements };
+        delete placements[characterId];
+        maps[id] = { ...m, placements, atualizadoEm: Date.now() };
+      }
+
+      const next: AppState = {
+        ...prev,
+        characters: {
+          ...prev.characters,
+          [characterId]: { ...ch, mapId, position: null },
+        },
+      };
+
+      set({
+        appState: next,
+        mapCatalog: { ...catalog, maps },
+        movementModeCharacterId: null,
+        selectedCharacterId:
+          get().selectedCharacterId === characterId &&
+          mapId !== get().activeMapId
+            ? null
+            : get().selectedCharacterId,
+      });
+      persistCurrent(next);
+      saveMapCatalog({ ...catalog, maps }).catch((e) =>
+        console.error('Erro ao mover unidade de andar:', e)
+      );
+      const destinoNome = mapId ? catalog.maps[mapId]?.nome ?? 'outro andar' : 'reserva';
+      get().showToast(`${ch.name} movido para ${destinoNome}.`);
+    },
+
+    createMapFolder: (nome, descricao = '') => {
+      const prevCatalog = get().mapCatalog;
+      const pasta = criarPasta(nome, descricao);
+      const nextCatalog: MapCatalog = {
+        ...prevCatalog,
+        folders: { ...prevCatalog.folders, [pasta.id]: pasta },
+      };
+      set({ mapCatalog: nextCatalog });
+      saveMapCatalog(nextCatalog).catch((e) =>
+        console.error('Erro ao salvar pastas de mapas:', e)
+      );
+      return pasta.id;
+    },
+
+    renameMapFolder: (folderId, nome) => {
+      const prevCatalog = get().mapCatalog;
+      const pasta = prevCatalog.folders[folderId];
+      if (!pasta) return;
+      const limpo = nome.trim();
+      if (!limpo || limpo === pasta.nome) return;
+      const nextCatalog: MapCatalog = {
+        ...prevCatalog,
+        folders: {
+          ...prevCatalog.folders,
+          [folderId]: { ...pasta, nome: limpo },
+        },
+      };
+      set({ mapCatalog: nextCatalog });
+      saveMapCatalog(nextCatalog).catch((e) =>
+        console.error('Erro ao renomear pasta de mapas:', e)
+      );
+    },
+
+    deleteMapFolder: (folderId) => {
+      const prevCatalog = get().mapCatalog;
+      if (!prevCatalog.folders[folderId]) return;
+      const folders = { ...prevCatalog.folders };
+      delete folders[folderId];
+      const maps: Record<string, GameMap> = {};
+      for (const [id, m] of Object.entries(prevCatalog.maps)) {
+        maps[id] = m.folderId === folderId ? { ...m, folderId: null } : m;
+      }
+      const nextCatalog: MapCatalog = {
+        ...prevCatalog,
+        maps,
+        folders,
+      };
+      set({
+        mapCatalog: nextCatalog,
+        activeFolderId:
+          get().activeFolderId === folderId ? null : get().activeFolderId,
+      });
+      saveMapCatalog(nextCatalog).catch((e) =>
+        console.error('Erro ao apagar pasta de mapas:', e)
+      );
+      get().showToast('Pasta removida — os mapas ficaram em "Sem pasta".');
+    },
+
+    setMapFolder: (mapId, folderId) => {
+      const prevCatalog = get().mapCatalog;
+      const mapa = prevCatalog.maps[mapId];
+      if (!mapa) return;
+      const destino = folderId && prevCatalog.folders[folderId] ? folderId : null;
+      if ((mapa.folderId ?? null) === destino) return;
+      const nextCatalog: MapCatalog = {
+        ...prevCatalog,
+        maps: { ...prevCatalog.maps, [mapId]: { ...mapa, folderId: destino } },
+      };
+      set({
+        mapCatalog: nextCatalog,
+        activeFolderId:
+          get().activeMapId === mapId ? destino : get().activeFolderId,
+      });
+      saveMapCatalog(nextCatalog).catch((e) =>
+        console.error('Erro ao mover mapa de pasta:', e)
+      );
+    },
+
+    agruparMapasNaMesmaPasta: (mapIdA, mapIdB) => {
+      const inicio = get().mapCatalog;
+      const a0 = inicio.maps[mapIdA];
+      const b0 = inicio.maps[mapIdB];
+      if (!a0 || !b0) return;
+      if (a0.folderId && b0.folderId) return; // já têm pasta: respeitar
+
+      const folderId =
+        a0.folderId ??
+        b0.folderId ??
+        get().createMapFolder(`Andares — ${a0.nome}`);
+
+      // Relê o catálogo: a criação da pasta pode tê-lo alterado
+      const prevCatalog = get().mapCatalog;
+      const a = prevCatalog.maps[mapIdA];
+      const b = prevCatalog.maps[mapIdB];
+      if (!a || !b) return;
+      const maps = { ...prevCatalog.maps };
+      if (!a.folderId) maps[mapIdA] = { ...a, folderId };
+      if (!b.folderId) maps[mapIdB] = { ...b, folderId };
+      const nextCatalog: MapCatalog = { ...prevCatalog, maps };
+      set({ mapCatalog: nextCatalog });
+      saveMapCatalog(nextCatalog).catch((e) =>
+        console.error('Erro ao agrupar mapas:', e)
+      );
+    },
+
+    switchToPreviousMap: () => {
+      const anterior = get().lastMapId;
+      if (!anterior || !get().mapCatalog.maps[anterior]) {
+        get().showToast('Não há andar anterior para voltar.');
+        return;
+      }
+      if (anterior === get().activeMapId) return;
+      get().switchMap(anterior);
+    },
+
+    openMapFloorsModal: () => set({ mapFloorsModalOpen: true }),
+    closeMapFloorsModal: () => set({ mapFloorsModalOpen: false }),
+
+    setActiveFolder: (folderId) => {
+      const prevCatalog = get().mapCatalog;
+      const valido = folderId && prevCatalog.folders[folderId] ? folderId : null;
+      set({ activeFolderId: valido });
+      // Se o mapa ativo não pertence à pasta escolhida, entra no primeiro mapa
+      const ativo = get().activeMapId;
+      const atual = ativo ? prevCatalog.maps[ativo] : null;
+      if (valido && atual && (atual.folderId ?? null) !== valido) {
+        const primeiro = mapasDoConjunto(prevCatalog, ativo).find(
+          (m) => m.folderId === valido
+        );
+        if (primeiro) get().switchMap(primeiro.id);
+      }
+    },
+
     switchMap: (mapId, opts = {}) => {
       const catalog = get().mapCatalog;
       const destino = catalog.maps[mapId];
@@ -864,14 +1135,22 @@ export const useGameStore = create<GameStore>((set, get) => {
       const origemId = get().activeMapId;
       if (origemId === mapId) return true;
 
+      // Quem está neste andar: unidades com mapId = origem (ou sem mapId,
+      // compatível com saves antigos e com unidades acabadas de posicionar).
+      const pertenceAoAndar = (ch: Character, andarId: string | null) =>
+        andarId !== null && (ch.mapId ?? andarId) === andarId;
+
       // 1) Guarda o estado do tabuleiro atual no mapa de origem
       const nextMaps = { ...catalog.maps };
       if (origemId && nextMaps[origemId]) {
         const atual = nextMaps[origemId];
         const placements: Record<string, { x: number; y: number }> = {};
         for (const ch of Object.values(prev.characters)) {
+          if (!pertenceAoAndar(ch, origemId)) continue;
           if (ch.position) placements[ch.id] = { ...ch.position };
         }
+        // A unidade que mudou de andar sai do mapa anterior
+        if (opts.characterId) delete placements[opts.characterId];
         nextMaps[origemId] = {
           ...atual,
           largura: prev.board.width,
@@ -885,9 +1164,16 @@ export const useGameStore = create<GameStore>((set, get) => {
       // 2) Novo tabuleiro a partir do mapa de destino
       const novoBoard = boardDoMapa(destino);
 
-      // 3) Reposiciona as unidades conforme as posições guardadas no destino
+      // 3) Cada unidade fica no seu andar: só as do destino entram no tabuleiro
       const novosPersonagens: Record<string, Character> = {};
       for (const [cid, ch] of Object.entries(prev.characters)) {
+        const viajaNesteMomento = opts.characterId === cid;
+        if (!viajaNesteMomento && !pertenceAoAndar(ch, mapId)) {
+          // Está noutro andar: mantém-se lá, fora deste tabuleiro
+          novosPersonagens[cid] = { ...ch, position: null };
+          continue;
+        }
+
         const guardada = destino.placements?.[cid] ?? null;
         let pos: GridPoint | null = guardada;
         if (pos) {
@@ -901,15 +1187,7 @@ export const useGameStore = create<GameStore>((set, get) => {
           );
           if (!livre) pos = null;
         }
-        if (!pos && !opts.characterId) {
-          // Troca manual pelo seletor de mapas: unidades sem posição guardada
-          // neste destino são colocadas perto do centro (nunca somem).
-          pos = primeiraCelulaLivre(novoBoard, novosPersonagens, ch, {
-            x: Math.floor(destino.largura / 2),
-            y: Math.floor(destino.altura / 2),
-          });
-        }
-        novosPersonagens[cid] = { ...ch, position: pos };
+        novosPersonagens[cid] = { ...ch, position: pos, mapId };
       }
 
       // 4) Unidade que usou a escada chega à escada de chegada
@@ -944,7 +1222,7 @@ export const useGameStore = create<GameStore>((set, get) => {
               y: 0,
             });
           }
-          novosPersonagens[ch.id] = { ...ch, position: pos };
+          novosPersonagens[ch.id] = { ...ch, position: pos, mapId };
           personagemChegou = novosPersonagens[ch.id];
         }
       }
@@ -966,12 +1244,18 @@ export const useGameStore = create<GameStore>((set, get) => {
       set({
         appState: novoEstado,
         activeMapId: mapId,
+        lastMapId: origemId,
+        activeFolderId: destino.folderId ?? null,
         mapCatalog: { ...catalog, maps: nextMaps },
         attackTargeting: null,
         movementModeCharacterId: null,
         selectedCharacterId: personagemChegou
           ? personagemChegou.id
-          : get().selectedCharacterId,
+          : (() => {
+              const atual = get().selectedCharacterId;
+              const sel = atual ? novosPersonagens[atual] : null;
+              return sel && sel.position ? atual : null;
+            })(),
       });
 
       persistCurrent(novoEstado);
@@ -986,7 +1270,7 @@ export const useGameStore = create<GameStore>((set, get) => {
         get().showToast(
           unidade
             ? `${unidade} passou para "${destino.nome}".`
-            : `Mapa ativo: "${destino.nome}".`
+            : `Andar ativo: "${destino.nome}".`
         );
       }
       return true;
@@ -1001,6 +1285,8 @@ export const useGameStore = create<GameStore>((set, get) => {
       const atual = catalog.maps[mapId];
       const placements: Record<string, { x: number; y: number }> = {};
       for (const ch of Object.values(prev.characters)) {
+        // Só guarda neste mapa quem pertence a este andar
+        if ((ch.mapId ?? mapId) !== mapId) continue;
         if (ch.position) placements[ch.id] = { ...ch.position };
       }
 
@@ -1300,17 +1586,18 @@ export const useGameStore = create<GameStore>((set, get) => {
 
         // O mapa ativo manda no trancamento da visão (predefinição do mestre)
         const mapaAtivoInicial = activeMapId ? mapsCatalog.maps[activeMapId] : null;
+        const comAndares = atribuirAndares(normalized, mapsCatalog, activeMapId);
         const estadoInicial: AppState = mapaAtivoInicial?.fog.locked
           ? {
-              ...normalized,
+              ...comAndares,
               settings: {
-                ...normalized.settings,
+                ...comAndares.settings,
                 fogMode: mapaAtivoInicial.fog.mode,
                 fogGlobalRange: mapaAtivoInicial.fog.range,
                 fogLocked: true,
               },
             }
-          : normalized;
+          : comAndares;
 
         set({
           initialized: true,
@@ -1320,6 +1607,9 @@ export const useGameStore = create<GameStore>((set, get) => {
           bestiaryCatalog: bestiary,
           mapCatalog: mapsCatalog,
           activeMapId,
+          activeFolderId: activeMapId
+            ? mapsCatalog.maps[activeMapId]?.folderId ?? null
+            : null,
           fichasList: fichas,
           selectedCharacterId: firstCharId,
           storageEstimate: est,
@@ -1332,18 +1622,26 @@ export const useGameStore = create<GameStore>((set, get) => {
           attacks: { ...arsenal.attacks, ...sampleBase.attacks },
         };
         const defaultId = 'match_default_001';
-        await saveMatchRecord(defaultId, sample.matchName, sample);
+        const mapaAtivoSampleId = mapsCatalog.maps[sample.board.id]
+          ? sample.board.id
+          : mapsCatalog.defaultMapId;
+        const amostraComAndares = atribuirAndares(
+          sample,
+          mapsCatalog,
+          mapaAtivoSampleId
+        );
+        await saveMatchRecord(defaultId, sample.matchName, amostraComAndares);
         set({
           initialized: true,
           activeMatchId: defaultId,
-          appState: sample,
+          appState: amostraComAndares,
           arsenalCatalog: arsenal,
           bestiaryCatalog: bestiary,
           mapCatalog: mapsCatalog,
-          activeMapId:
-            mapsCatalog.maps[sample.board.id]
-              ? sample.board.id
-              : mapsCatalog.defaultMapId,
+          activeMapId: mapaAtivoSampleId,
+          activeFolderId: mapaAtivoSampleId
+            ? mapsCatalog.maps[mapaAtivoSampleId]?.folderId ?? null
+            : null,
 
           fichasList: fichas,
           selectedCharacterId: 'char_lyra',
@@ -1366,9 +1664,23 @@ export const useGameStore = create<GameStore>((set, get) => {
         stateWithTitle.combat.activeCharacterId ||
         Object.keys(stateWithTitle.characters)[0] ||
         null;
+      const catalogo = get().mapCatalog;
+      const mapaAtivo =
+        stateWithTitle.board.id && catalogo.maps[stateWithTitle.board.id]
+          ? stateWithTitle.board.id
+          : get().activeMapId ?? catalogo.defaultMapId;
+      const estadoComAndares = atribuirAndares(
+        stateWithTitle,
+        catalogo,
+        mapaAtivo
+      );
       set({
         activeMatchId: matchId,
-        appState: stateWithTitle,
+        appState: estadoComAndares,
+        activeMapId: mapaAtivo,
+        activeFolderId: mapaAtivo
+          ? catalogo.maps[mapaAtivo]?.folderId ?? null
+          : null,
         selectedCharacterId: firstId,
         movementModeCharacterId: null,
         attackTargeting: null,
@@ -1722,6 +2034,8 @@ export const useGameStore = create<GameStore>((set, get) => {
         ...char,
         hpCurrent: Math.max(0, Math.min(char.hpMax, char.hpCurrent)),
         position: finalPos,
+        // Unidade nova entra no andar ativo; edições preservam o andar atual
+        mapId: char.mapId ?? get().activeMapId,
       };
 
       const next: AppState = {
@@ -1856,18 +2170,54 @@ export const useGameStore = create<GameStore>((set, get) => {
       };
 
       const next = executeCommand(prev, action);
+      const comAndar: AppState = {
+        ...next,
+        characters: {
+          ...next.characters,
+          [characterId]: {
+            ...next.characters[characterId],
+            mapId: get().activeMapId,
+          },
+        },
+      };
+      // Ao entrar neste andar, a unidade sai das colocações dos outros mapas
+      const andarAtivo = get().activeMapId;
+      const catalogo = get().mapCatalog;
+      let catalogoAtualizado = catalogo;
+      if (andarAtivo) {
+        const maps: Record<string, GameMap> = {};
+        let mudou = false;
+        for (const [id, m] of Object.entries(catalogo.maps)) {
+          if (id === andarAtivo || !m.placements?.[characterId]) {
+            maps[id] = m;
+            continue;
+          }
+          const placements = { ...m.placements };
+          delete placements[characterId];
+          maps[id] = { ...m, placements, atualizadoEm: Date.now() };
+          mudou = true;
+        }
+        if (mudou) {
+          catalogoAtualizado = { ...catalogo, maps };
+          saveMapCatalog(catalogoAtualizado).catch((e) =>
+            console.error('Erro ao salvar mapas:', e)
+          );
+        }
+      }
+
       set({
-        appState: next,
+        appState: comAndar,
+        mapCatalog: catalogoAtualizado,
         selectedCharacterId: characterId,
         movementModeCharacterId: null,
       });
-      persistCurrent(next);
+      persistCurrent(comAndar);
 
       // Escadas: ao pisar uma escada ligada, muda automaticamente de mapa
       const mapaAtivo = get().activeMapId
         ? get().mapCatalog.maps[get().activeMapId as string] ?? null
         : null;
-      const escada = escadaSobUnidade(mapaAtivo, next.characters[characterId]);
+      const escada = escadaSobUnidade(mapaAtivo, comAndar.characters[characterId]);
       if (escada && escada.targetMapId) {
         if (get().mapCatalog.maps[escada.targetMapId]) {
           get().switchMap(escada.targetMapId as string, {

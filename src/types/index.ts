@@ -50,6 +50,11 @@ export interface Character {
   epitomeSummary?: EpitomeTacticalSummary;
   /** Alcance de visão individual (Névoa de Visão), sobrepõe-se ao alcance global */
   visionRange?: number | null;
+  /**
+   * Andar/mapa onde a unidade está (Glossário → Locais → Mapas).
+   * `null`/ausente = pertence ao mapa ativo (compatível com saves antigos).
+   */
+  mapId?: string | null;
 }
 
 export interface Weapon {

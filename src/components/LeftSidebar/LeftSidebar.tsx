@@ -9,6 +9,7 @@ import {
   GripVertical,
   History,
   ListOrdered,
+  Layers,
   MapPin,
   MapPinOff,
   Plus,
@@ -62,6 +63,10 @@ export const LeftSidebar: React.FC = () => {
   const duplicateCharacter = useGameStore((s) => s.duplicateCharacter);
   const deleteCharacter = useGameStore((s) => s.deleteCharacter);
   const autoPlaceCharacter = useGameStore((s) => s.autoPlaceCharacter);
+  const activeMapId = useGameStore((s) => s.activeMapId);
+  const mapCatalog = useGameStore((s) => s.mapCatalog);
+  const switchMap = useGameStore((s) => s.switchMap);
+  const moveCharacterToFloor = useGameStore((s) => s.moveCharacterToFloor);
   const removeCharacterFromBoard = useGameStore((s) => s.removeCharacterFromBoard);
 
   const setCombatMode = useGameStore((s) => s.setCombatMode);
@@ -79,12 +84,23 @@ export const LeftSidebar: React.FC = () => {
   const [dragInitIdx, setDragInitIdx] = useState<number | null>(null);
 
   const allChars = Object.values(appState.characters);
-  const positionedChars = allChars.filter((c) => c.position !== null);
-  const reserveChars = allChars.filter((c) => c.position === null);
+
+  // Cada unidade pertence a um andar; só as deste andar aparecem no tabuleiro
+  const andarDe = (c: (typeof allChars)[number]) => c.mapId ?? activeMapId;
+  const desteAndar = allChars.filter((c) => andarDe(c) === activeMapId);
+  const outrosAndares = allChars.filter(
+    (c) => activeMapId !== null && andarDe(c) !== activeMapId
+  );
+
+  const positionedChars = desteAndar.filter((c) => c.position !== null);
+  const reserveChars = desteAndar.filter((c) => c.position === null);
 
   const notInInitiative = allChars.filter(
     (c) => !appState.combat.turnOrder.includes(c.id)
   );
+
+  const nomeDoAndar = (mapId: string | null | undefined) =>
+    mapId ? mapCatalog.maps[mapId]?.nome ?? 'Andar removido' : 'Sem mapa';
 
   // Log sem as mudanças de direção (seguem o cursor) — só jogadas reais.
   const logEntries = appState.history.past.filter(
@@ -363,6 +379,72 @@ export const LeftSidebar: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {/* Noutros andares: unidades que ficaram noutro mapa */}
+              {outrosAndares.length > 0 && (
+                <div>
+                  <div className={styles.groupLabel}>
+                    Noutros Andares ({outrosAndares.length})
+                  </div>
+                  <div className={styles.charList}>
+                    {outrosAndares.map((ch) => (
+                      <div key={ch.id} className={styles.charCard}>
+                        <div className={styles.charInfo}>
+                          <TokenAvatar
+                            imageId={ch.imageId}
+                            alt={ch.name}
+                            size={30}
+                            borderColor="rgba(148,163,184,0.45)"
+                          />
+                          <div className={styles.charMeta}>
+                            <div className={styles.charName}>{ch.name}</div>
+                            <div className={styles.charSub}>
+                              <span>
+                                {nomeDoAndar(andarDe(ch))}
+                                {(() => {
+                                  // Posição guardada no mapa desse andar
+                                  const andar = andarDe(ch);
+                                  const guardada = andar
+                                    ? mapCatalog.maps[andar]?.placements?.[ch.id]
+                                    : null;
+                                  const pos = ch.position ?? guardada ?? null;
+                                  return pos
+                                    ? ` • (${pos.x},${pos.y})`
+                                    : ' • reserva';
+                                })()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div
+                          className={styles.cardActions}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {andarDe(ch) && (
+                            <button
+                              className={styles.iconBtn}
+                              title="Ver o andar onde a unidade está"
+                              onClick={() => switchMap(andarDe(ch) as string)}
+                            >
+                              <Layers size={13} />
+                            </button>
+                          )}
+                          <button
+                            className={styles.iconBtn}
+                            title="Trazer para o andar ativo (fica na reserva)"
+                            onClick={() =>
+                              moveCharacterToFloor(ch.id, activeMapId)
+                            }
+                          >
+                            <MapPin size={13} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}

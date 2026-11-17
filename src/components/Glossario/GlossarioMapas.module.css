@@ -155,6 +155,156 @@
   margin-top: 10px;
 }
 
+/* ---- Árvore de pastas ---- */
+
+.folderTree {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  max-height: 560px;
+  overflow-y: auto;
+  padding-right: 3px;
+}
+
+.folderCreateBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  border-radius: 4px;
+  border: 1px dashed rgba(196, 137, 26, 0.45);
+  background: rgba(122, 80, 18, 0.12);
+  color: var(--color-dourado-200);
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.folderCreateBtn:hover {
+  background: rgba(122, 80, 18, 0.24);
+}
+
+.folderCreateRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.folderGroup {
+  border: 1px solid rgba(187, 169, 139, 0.16);
+  border-radius: 5px;
+  background: rgba(16, 14, 12, 0.5);
+  overflow: hidden;
+}
+
+.folderHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 5px 6px 5px 8px;
+  background: rgba(28, 24, 19, 0.85);
+}
+
+.folderHeaderOpen {
+  border-bottom: 1px solid rgba(187, 169, 139, 0.16);
+}
+
+.folderToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  padding: 2px 0;
+  border: none;
+  background: transparent;
+  color: var(--color-pergaminho-200);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-titulo1);
+  font-size: 11.5px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.folderToggle:hover {
+  color: var(--color-dourado-200);
+}
+
+.folderNome {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folderCount {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: rgba(196, 137, 26, 0.28);
+  color: var(--color-dourado-100);
+}
+
+.folderNameInput {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--color-dourado-400);
+  background: rgba(12, 10, 9, 0.9);
+  color: var(--color-pergaminho-100);
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  text-transform: none;
+}
+
+.folderActions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.iconMini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  border: 1px solid rgba(187, 169, 139, 0.22);
+  background: rgba(20, 17, 14, 0.7);
+  color: var(--color-pergaminho-400);
+  cursor: pointer;
+}
+
+.iconMini:hover {
+  color: var(--color-dourado-200);
+  border-color: var(--color-dourado-500);
+}
+
+.folderMaps {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px;
+}
+
+.folderEmpty {
+  padding: 6px 4px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-style: italic;
+  color: var(--color-pergaminho-500);
+}
+
 .mapItem {
   display: flex;
   align-items: center;

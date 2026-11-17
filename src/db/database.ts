@@ -21,7 +21,7 @@ import {
 } from '../bestiary/bestiaryTypes';
 import { normalizarMonstro } from '../bestiary/bestiaryEngine';
 import { GameMap, MapCatalog } from '../maps/mapTypes';
-import { normalizarMapa } from '../maps/mapEngine';
+import { normalizarCatalogoMapas, normalizarMapa } from '../maps/mapEngine';
 import { EpitomeFicha } from '../epitome/epitomeTypes';
 import {
   DEFAULT_SAMPLE_FICHAS,
@@ -295,6 +295,7 @@ export async function saveMapCatalog(catalog: MapCatalog): Promise<void> {
     id: MAPAS_GLOSSARIO_ID,
     termo: 'Mapas do Tabuleiro',
     maps: clean,
+    folders: catalog.folders ?? {},
     defaultMapId: catalog.defaultMapId ?? null,
     updatedAt: Date.now(),
   });
@@ -310,11 +311,16 @@ export async function loadOrSeedMapCatalog(
     for (const [id, raw] of Object.entries(rec.maps as Record<string, GameMap>)) {
       maps[id] = normalizarMapa(raw, id);
     }
-    const defaultMapId =
-      typeof rec.defaultMapId === 'string' && maps[rec.defaultMapId]
-        ? rec.defaultMapId
-        : Object.keys(maps)[0] ?? null;
-    return { maps, defaultMapId };
+    const catalogo = normalizarCatalogoMapas({
+      maps,
+      folders: rec.folders ?? {},
+      defaultMapId: rec.defaultMapId,
+    });
+    // Migração silenciosa: pastas podem ter sido criadas ao normalizar
+    if (!rec.folders) {
+      saveMapCatalog(catalogo).catch(() => undefined);
+    }
+    return catalogo;
   }
 
   const seeded = createDefaultMapCatalog(baseBoard ?? undefined, baseName);

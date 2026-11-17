@@ -1,6 +1,11 @@
 import { Board, TerrainType } from '../types';
 import { GameMap, MapCatalog } from '../maps/mapTypes';
-import { criarMapaEmBranco, gerarStairId, mapaAPartirDoTabuleiro } from '../maps/mapEngine';
+import {
+  criarMapaEmBranco,
+  criarPasta,
+  gerarStairId,
+  mapaAPartirDoTabuleiro,
+} from '../maps/mapEngine';
 
 /**
  * Mapas de exemplo criados na primeira execução:
@@ -73,8 +78,14 @@ export function createDefaultMapCatalog(baseBoard?: Board, baseName?: string): M
     },
   ];
 
+  // As ruínas e a cripta ficam na mesma pasta (andares ligados entre si)
+  const pasta = criarPasta('Ruínas & Cripta', 'Andares ligados por escadas');
+  principal.folderId = pasta.id;
+  cripta.folderId = pasta.id;
+
   return {
     maps: { [principal.id]: principal, [cripta.id]: cripta },
+    folders: { [pasta.id]: pasta },
     defaultMapId: principal.id,
   };
 }
@@ -82,5 +93,5 @@ export function createDefaultMapCatalog(baseBoard?: Board, baseName?: string): M
 /** Mapa único adotado a partir do tabuleiro (sem exemplos). */
 export function createSingleMapCatalog(board: Board, nome: string): MapCatalog {
   const mapa: GameMap = mapaAPartirDoTabuleiro(board, nome);
-  return { maps: { [mapa.id]: mapa }, defaultMapId: mapa.id };
+  return { maps: { [mapa.id]: mapa }, folders: {}, defaultMapId: mapa.id };
 }

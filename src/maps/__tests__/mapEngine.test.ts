@@ -4,17 +4,22 @@ import {
   boardDoMapa,
   celulaTemEscada,
   chaveCelula,
+  componenteDeMapas,
   criarMapaEmBranco,
   escadaNaCelula,
   escadaSobUnidade,
   escadasLigadas,
   escadasOrfas,
   listarMapas,
+  listarPastas,
+  mapasDaPasta,
+  mapasDoConjunto,
   normalizarCatalogoMapas,
   normalizarMapa,
   primeiraCelulaLivre,
   resolverChegada,
   rotuloDirecao,
+  vizinhosDeAndar,
   simboloDirecao,
 } from '../mapEngine';
 import {
@@ -246,5 +251,143 @@ describe('primeiraCelulaLivre — ocupação', () => {
     const enorme = unidade({ width: 5, height: 5 });
     const pequeno: Board = { id: 'b3', width: 3, height: 3, terrain: {} };
     expect(primeiraCelulaLivre(pequeno, {}, enorme, { x: 0, y: 0 })).toBeNull();
+  });
+});
+
+describe('Pastas de mapas e andares', () => {
+  const ligados = () =>
+    normalizarCatalogoMapas({
+      maps: [
+        {
+          id: 'm_superior',
+          nome: 'Ruínas',
+          largura: 10,
+          altura: 10,
+          stairs: [
+            { id: 's1', x: 1, y: 1, direction: 'down', targetMapId: 'm_inferior' },
+          ],
+        },
+        {
+          id: 'm_inferior',
+          nome: 'Cripta',
+          largura: 8,
+          altura: 8,
+          stairs: [
+            { id: 's2', x: 0, y: 0, direction: 'up', targetMapId: 'm_superior' },
+          ],
+        },
+        { id: 'm_solto', nome: 'Sala Isolada', largura: 6, altura: 6 },
+      ],
+    });
+
+  it('agrupa automaticamente mapas ligados numa pasta', () => {
+    const cat = ligados();
+    const pastas = listarPastas(cat);
+    expect(pastas).toHaveLength(1);
+    expect(cat.maps.m_superior.folderId).toBe(pastas[0].id);
+    expect(cat.maps.m_inferior.folderId).toBe(pastas[0].id);
+    // Um mapa sem ligações fica de fora
+    expect(cat.maps.m_solto.folderId).toBeNull();
+  });
+
+  it('respeita pastas diferentes escolhidas pelo mestre', () => {
+    const cat = ligados();
+    const pasta = listarPastas(cat)[0];
+    const outro = normalizarCatalogoMapas({
+      maps: [
+        {
+          id: 'm_superior',
+          nome: 'Ruínas',
+          largura: 10,
+          altura: 10,
+          folderId: pasta.id,
+          stairs: [
+            { id: 's1', x: 1, y: 1, direction: 'down', targetMapId: 'm_inferior' },
+          ],
+        },
+        {
+          id: 'm_inferior',
+          nome: 'Cripta',
+          largura: 8,
+          altura: 8,
+          folderId: 'outra_pasta',
+          stairs: [],
+        },
+      ],
+      folders: [{ id: pasta.id, nome: 'Ruínas' }, { id: 'outra_pasta', nome: 'Cripta' }],
+    });
+    expect(outro.maps.m_inferior.folderId).toBe('outra_pasta');
+    expect(outro.maps.m_superior.folderId).toBe(pasta.id);
+  });
+
+  it('lista mapas por pasta e descarta pastas inexistentes', () => {
+    const cat = ligados();
+    const pasta = listarPastas(cat)[0];
+    expect(mapasDaPasta(cat, pasta.id).map((m) => m.id).sort()).toEqual([
+      'm_inferior',
+      'm_superior',
+    ]);
+    expect(mapasDaPasta(cat, null).map((m) => m.id)).toEqual(['m_solto']);
+
+    const orfao = normalizarCatalogoMapas({
+      maps: [{ id: 'm_x', nome: 'X', largura: 5, altura: 5, folderId: 'nao_existe' }],
+      folders: [],
+    });
+    expect(orfao.maps.m_x.folderId).toBeNull();
+  });
+
+  it('encontra a componente de mapas ligados por escadas', () => {
+    const cat = ligados();
+    expect(componenteDeMapas(cat, 'm_inferior').map((m) => m.id).sort()).toEqual([
+      'm_inferior',
+      'm_superior',
+    ]);
+    expect(componenteDeMapas(cat, 'm_solto').map((m) => m.id)).toEqual(['m_solto']);
+    expect(componenteDeMapas(cat, null)).toEqual([]);
+  });
+
+  it('usa a pasta e recorre à componente quando não há pasta', () => {
+    const cat = ligados();
+    expect(mapasDoConjunto(cat, 'm_superior').map((m) => m.id).sort()).toEqual([
+      'm_inferior',
+      'm_superior',
+    ]);
+
+    const semPasta = normalizarCatalogoMapas({
+      maps: [
+        {
+          id: 'a',
+          nome: 'A',
+          largura: 6,
+          altura: 6,
+          folderId: null,
+          stairs: [{ id: 's', x: 0, y: 0, direction: 'down', targetMapId: 'b' }],
+        },
+        { id: 'b', nome: 'B', largura: 6, altura: 6, folderId: null, stairs: [] },
+        { id: 'c', nome: 'C', largura: 6, altura: 6, folderId: null, stairs: [] },
+      ],
+      folders: [],
+    });
+    // sem pastas o normalizador cria uma; garantir que o conjunto não inclui o C
+    const ids = mapasDoConjunto(semPasta, 'a').map((m) => m.id);
+    expect(ids).toContain('a');
+    expect(ids).toContain('b');
+    expect(ids).not.toContain('c');
+  });
+
+  it('identifica o andar superior e o inferior pelas escadas', () => {
+    const cat = ligados();
+    expect(vizinhosDeAndar(cat, 'm_superior')).toEqual({
+      acima: null,
+      abaixo: cat.maps.m_inferior,
+    });
+    expect(vizinhosDeAndar(cat, 'm_inferior')).toEqual({
+      acima: cat.maps.m_superior,
+      abaixo: null,
+    });
+    expect(vizinhosDeAndar(cat, 'm_solto')).toEqual({
+      acima: null,
+      abaixo: null,
+    });
   });
 });

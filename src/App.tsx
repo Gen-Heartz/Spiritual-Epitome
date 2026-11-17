@@ -17,6 +17,7 @@ import { CharacterModal } from './components/Modals/CharacterModal';
 import { ArsenalModal } from './components/Modals/ArsenalModal';
 import { AttackEditorModal } from './components/Modals/AttackEditorModal';
 import { MatchesModal } from './components/Modals/MatchesModal';
+import { MapFloorsModal } from './components/Modals/MapFloorsModal';
 import { SettingsModal } from './components/Modals/SettingsModal';
 import { SpawnFichaModal } from './components/Modals/SpawnFichaModal';
 import { QuickSheetModal } from './components/Modals/QuickSheetModal';
@@ -90,6 +91,7 @@ export const App: React.FC = () => {
           <ArsenalModal />
           <AttackEditorModal />
           <MatchesModal />
+          <MapFloorsModal />
           <SettingsModal />
         </>
       )}
