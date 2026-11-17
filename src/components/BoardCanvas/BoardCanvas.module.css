@@ -271,6 +271,36 @@
   color: #cbd5e1;
 }
 
+.stairHud {
+  position: absolute;
+  top: 52px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(8, 10, 16, 0.92);
+  border: 1px solid #fca5a5;
+  color: #fca5a5;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  z-index: 12;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
+  max-width: 320px;
+}
+
+.stairHudLinked {
+  border-color: #86efac;
+  color: #86efac;
+}
+
+.stairHudIcon {
+  font-size: 13px;
+}
+
 .coordsHud {
   position: absolute;
   bottom: 14px;

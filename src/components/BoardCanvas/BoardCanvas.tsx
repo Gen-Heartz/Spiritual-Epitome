@@ -28,6 +28,8 @@ import {
   onImageCacheUpdated,
 } from '../../utils/imageProcessor';
 import { Direction, ImpactZone, TerrainType } from '../../types';
+import { MapStair } from '../../maps/mapTypes';
+import { escadaSobUnidade, simboloDirecao } from '../../maps/mapEngine';
 import styles from './BoardCanvas.module.css';
 
 const CELL_SIZE = 56;
@@ -50,6 +52,8 @@ export const BoardCanvas: React.FC = () => {
   const movementModeCharacterId = useGameStore((s) => s.movementModeCharacterId);
   const attackTargeting = useGameStore((s) => s.attackTargeting);
   const showZoneLegend = useGameStore((s) => s.showZoneLegend);
+  const mapCatalog = useGameStore((s) => s.mapCatalog);
+  const activeMapId = useGameStore((s) => s.activeMapId);
   const cameraResetNonce = useGameStore((s) => s.cameraResetNonce);
   const zoomStepRequest = useGameStore((s) => s.zoomStepRequest);
 
@@ -258,6 +262,29 @@ export const BoardCanvas: React.FC = () => {
     appState.settings.diagonalRule,
   ]);
 
+  // === Escadas do mapa ativo (definidas em Glossário → Locais → Mapas) ===
+  const mapaAtivo = activeMapId ? mapCatalog.maps[activeMapId] ?? null : null;
+
+  const activeMapStairs = useMemo<MapStair[]>(() => {
+    const mapa = mapaAtivo;
+    if (!mapa) return [];
+    return mapa.stairs.filter(
+      (st) =>
+        st.x >= 0 &&
+        st.y >= 0 &&
+        st.x < appState.board.width &&
+        st.y < appState.board.height
+    );
+  }, [mapaAtivo, appState.board.width, appState.board.height]);
+
+  const escadaDaUnidade = useMemo(() => {
+    const unidade = selectedCharacterId
+      ? appState.characters[selectedCharacterId]
+      : undefined;
+    if (!unidade || !unidade.position || !mapaAtivo) return null;
+    return escadaSobUnidade(mapaAtivo, unidade);
+  }, [selectedCharacterId, appState.characters, mapaAtivo]);
+
   // === Renderização Sob Demanda (Dirty Flag — Parte 3.4) ===
   const drawRef = useRef<() => void>(() => {});
 
@@ -293,6 +320,7 @@ export const BoardCanvas: React.FC = () => {
     const boardPixelH = board.height * CELL_SIZE;
     const inter = interactionRef.current;
     const hCell = hoverCellRef.current;
+    const stairList = activeMapStairs;
 
     // Limpa tela em coordenadas de dispositivo
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -428,6 +456,59 @@ export const BoardCanvas: React.FC = () => {
       for (let y = 0; y < board.height; y++) {
         ctx.fillText(String(y), -20, y * CELL_SIZE + CELL_SIZE / 2);
       }
+    }
+
+    // =========================================================================
+    // CAMADA 3.5: Escadas entre mapas (Glossário → Locais → Mapas)
+    // =========================================================================
+    // Puramente visual: desenha a marca da escada no quadrado, com seta de
+    // subida (▲) ou descida (▼) e um anel dourado quando está ligada.
+    if (stairList.length > 0) {
+      ctx.save();
+      ctx.setLineDash([]);
+      for (const st of stairList) {
+        const px = st.x * CELL_SIZE;
+        const py = st.y * CELL_SIZE;
+        const ligada = Boolean(st.targetMapId);
+
+        // Base: degraus
+        ctx.fillStyle = ligada
+          ? 'rgba(122, 80, 18, 0.42)'
+          : 'rgba(82, 74, 62, 0.35)';
+        ctx.fillRect(px + 3, py + 3, CELL_SIZE - 6, CELL_SIZE - 6);
+
+        // Degraus (linhas horizontais)
+        ctx.strokeStyle = ligada
+          ? 'rgba(234, 197, 122, 0.55)'
+          : 'rgba(170, 160, 145, 0.4)';
+        ctx.lineWidth = 1.4;
+        for (let i = 1; i <= 3; i++) {
+          const yy = py + (CELL_SIZE / 4) * i;
+          ctx.beginPath();
+          ctx.moveTo(px + CELL_SIZE * 0.22, yy);
+          ctx.lineTo(px + CELL_SIZE * 0.78, yy);
+          ctx.stroke();
+        }
+
+        // Moldura
+        ctx.strokeStyle = ligada
+          ? 'rgba(234, 197, 122, 0.85)'
+          : 'rgba(160, 148, 130, 0.6)';
+        ctx.lineWidth = 1.6;
+        ctx.strokeRect(px + 3, py + 3, CELL_SIZE - 6, CELL_SIZE - 6);
+
+        // Seta de direção
+        ctx.fillStyle = st.direction === 'up' ? '#86efac' : '#fca5a5';
+        ctx.font = `700 ${Math.round(CELL_SIZE * 0.3)}px Inter, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(
+          simboloDirecao(st.direction),
+          px + CELL_SIZE / 2,
+          py + CELL_SIZE / 2 + 1
+        );
+      }
+      ctx.restore();
     }
 
     // =========================================================================
@@ -1178,6 +1259,7 @@ export const BoardCanvas: React.FC = () => {
     attackTargeting,
     reachableMap,
     projectedAttack,
+    activeMapStairs,
     requestRedraw,
   ]);
 
@@ -1797,12 +1879,35 @@ export const BoardCanvas: React.FC = () => {
         </div>
       )}
 
+      {/* Escada sob a unidade selecionada: dica de ligação entre mapas */}
+      {escadaDaUnidade && (
+        <div
+          className={`${styles.stairHud} ${
+            escadaDaUnidade.targetMapId ? styles.stairHudLinked : ''
+          }`}
+        >
+          <span className={styles.stairHudIcon} aria-hidden="true">
+            {simboloDirecao(escadaDaUnidade.direction)}
+          </span>
+          <span>
+            {escadaDaUnidade.label}
+            {escadaDaUnidade.targetMapId
+              ? ` → ${mapCatalog.maps[escadaDaUnidade.targetMapId]?.nome ?? 'mapa removido'}`
+              : ' • sem ligação definida'}
+          </span>
+        </div>
+      )}
+
       {/* Coordenadas e status do quadrado sob o mouse */}
       <div className={styles.coordsHud}>
         <span>
           Tabuleiro {appState.board.width}×{appState.board.height}
         </span>
-        {hoveredCell && (
+        {hoveredCell &&
+          hoveredCell.x >= 0 &&
+          hoveredCell.y >= 0 &&
+          hoveredCell.x < appState.board.width &&
+          hoveredCell.y < appState.board.height && (
           <>
             <span>•</span>
             <span>

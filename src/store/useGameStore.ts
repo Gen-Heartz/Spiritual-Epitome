@@ -6,6 +6,7 @@ import {
   ArsenalCatalog,
   Attack,
   AttackTargetingState,
+  Board,
   Character,
   CombatMode,
   Direction,
@@ -55,6 +56,21 @@ import {
 } from '../bestiary/bestiaryTypes';
 import { converterMonstroParaTabuleiro } from '../bestiary/bestiaryEngine';
 import { createDefaultBestiaryCatalog } from '../data/bestiaryPresets';
+import { GameMap, MapCatalog, MapStair } from '../maps/mapTypes';
+import {
+  boardDoMapa,
+  criarMapaEmBranco,
+  escadaSobUnidade,
+  gerarStairId,
+  listarMapas,
+  normalizarCatalogoMapas,
+  primeiraCelulaLivre,
+  resolverChegada,
+} from '../maps/mapEngine';
+import {
+  loadOrSeedMapCatalog,
+  saveMapCatalog,
+} from '../db/database';
 import { initializeAllPresetEmblems } from '../utils/imageProcessor';
 import {
   createBlankMatchState,
@@ -67,6 +83,8 @@ export type AppScreen =
   | 'glossario'
   | 'glossario_armas'
   | 'glossario_monstros'
+  | 'glossario_locais'
+  | 'glossario_mapas'
   | 'fichas'
   | 'ficha_editor'
   | 'ficha_jogar'
@@ -105,6 +123,7 @@ export function normalizeAppState(state: AppState): AppState {
       fogRangeMode: state.settings?.fogRangeMode ?? 'global',
       fogGlobalRange: state.settings?.fogGlobalRange ?? 8,
       fogIntensity: state.settings?.fogIntensity ?? 1,
+      fogLocked: state.settings?.fogLocked ?? false,
     },
   };
 
@@ -181,6 +200,10 @@ export interface GameStore {
   arsenalCatalog: ArsenalCatalog;
   /** Bestiário do Glossário (Glossário -> Monstros) */
   bestiaryCatalog: BestiaryCatalog;
+  /** Mapas do Tabuleiro (Glossário -> Locais -> Mapas) */
+  mapCatalog: MapCatalog;
+  /** Mapa atualmente carregado no tabuleiro */
+  activeMapId: string | null;
   fichasList: EpitomeFicha[];
   editingFichaId: string | null;
   playingFichaIds: string[];
@@ -244,6 +267,22 @@ export interface GameStore {
   deleteMonster: (monsterId: string) => void;
   importBestiary: (monsters: BestiaryMonster[]) => Promise<number>;
   summonMonsterOnBoard: (monsterId: string) => Promise<string | null>;
+
+  // Mapas & Escadas (Glossário -> Locais -> Mapas)
+  refreshMaps: () => Promise<void>;
+  upsertMap: (map: GameMap) => void;
+  deleteMap: (mapId: string) => void;
+  duplicateMap: (mapId: string) => string | null;
+  setDefaultMap: (mapId: string) => void;
+  switchMap: (
+    mapId: string,
+    opts?: {
+      characterId?: string | null;
+      arrivalStairId?: string | null;
+      silent?: boolean;
+    }
+  ) => boolean;
+  syncActiveMapFromBoard: () => void;
 
   saveFichaRecord: (
     ficha: EpitomeFicha,
@@ -381,6 +420,8 @@ export const useGameStore = create<GameStore>((set, get) => {
     schedulePersist(matchId, nextAppState, (est) => {
       set({ storageEstimate: est });
     });
+    // Mantém o mapa ativo sincronizado (dimensões, terreno e posições)
+    get().syncActiveMapFromBoard();
   };
 
   /** Sincroniza `vidaAtual` do Tabuleiro de volta para fichas vinculadas em IndexedDB */
@@ -419,6 +460,8 @@ export const useGameStore = create<GameStore>((set, get) => {
 
     arsenalCatalog: createDefaultArsenalCatalog(),
     bestiaryCatalog: createDefaultBestiaryCatalog(),
+    mapCatalog: { maps: {}, defaultMapId: null },
+    activeMapId: null,
     fichasList: [],
     editingFichaId: null,
     playingFichaIds: [],
@@ -642,6 +685,341 @@ export const useGameStore = create<GameStore>((set, get) => {
           : `${monstro.nome} adicionado à reserva (tabuleiro sem espaço livre).`
       );
       return bundle.character.id;
+    },
+
+    // ===== Mapas & Escadas (Glossário -> Locais -> Mapas) =====
+    refreshMaps: async () => {
+      const catalog = await loadOrSeedMapCatalog(
+        get().appState.board,
+        get().appState.matchName
+      );
+      const activeMapId =
+        get().activeMapId && catalog.maps[get().activeMapId as string]
+          ? get().activeMapId
+          : get().appState.board.id && catalog.maps[get().appState.board.id]
+          ? get().appState.board.id
+          : catalog.defaultMapId ?? Object.keys(catalog.maps)[0] ?? null;
+
+      set({ mapCatalog: catalog, activeMapId });
+    },
+
+    upsertMap: (mapa) => {
+      const prevCatalog = get().mapCatalog;
+      const existente = prevCatalog.maps[mapa.id];
+      const normalizado: GameMap = {
+        ...mapa,
+        criadoEm: existente ? existente.criadoEm : mapa.criadoEm || Date.now(),
+        atualizadoEm: Date.now(),
+      };
+      const nextCatalog: MapCatalog = {
+        ...prevCatalog,
+        maps: { ...prevCatalog.maps, [mapa.id]: normalizado },
+        defaultMapId: prevCatalog.defaultMapId ?? mapa.id,
+      };
+      set({ mapCatalog: nextCatalog });
+      saveMapCatalog(nextCatalog).catch((e) =>
+        console.error('Erro ao salvar mapas:', e)
+      );
+
+      // Se o mapa editado é o mapa ativo, refletir terreno/dimensões no tabuleiro
+      if (get().activeMapId === mapa.id) {
+        const prevState = get().appState;
+        const board = prevState.board;
+        const dimsMudaram =
+          board.width !== normalizado.largura ||
+          board.height !== normalizado.altura;
+        const terrenoMudou =
+          JSON.stringify(board.terrain) !== JSON.stringify(normalizado.terrain);
+
+        const presetMudou =
+          prevState.settings.fogMode !== normalizado.fog.mode ||
+          prevState.settings.fogGlobalRange !== normalizado.fog.range ||
+          prevState.settings.fogLocked !== normalizado.fog.locked;
+
+        if (dimsMudaram || terrenoMudou || presetMudou) {
+          const novoBoard: Board = {
+            id: normalizado.id,
+            width: normalizado.largura,
+            height: normalizado.altura,
+            terrain: { ...normalizado.terrain },
+          };
+          const personagens = { ...prevState.characters };
+          for (const [cid, ch] of Object.entries(personagens)) {
+            if (
+              ch.position &&
+              (ch.position.x >= novoBoard.width ||
+                ch.position.y >= novoBoard.height)
+            ) {
+              personagens[cid] = { ...ch, position: null };
+            }
+          }
+          const proximoEstado: AppState = {
+            ...prevState,
+            board: novoBoard,
+            characters: personagens,
+            settings: {
+              ...prevState.settings,
+              fogMode: normalizado.fog.mode,
+              fogGlobalRange: normalizado.fog.range,
+              fogLocked: normalizado.fog.locked,
+            },
+            lastAttack: null,
+          };
+          set({ appState: proximoEstado });
+          persistCurrent(proximoEstado);
+        }
+      }
+    },
+
+    deleteMap: (mapId) => {
+      const prevCatalog = get().mapCatalog;
+      if (!prevCatalog.maps[mapId]) return;
+
+      const maps = { ...prevCatalog.maps };
+      delete maps[mapId];
+
+      // Limpa ligações de escadas que apontavam para o mapa removido
+      for (const [id, mapa] of Object.entries(maps)) {
+        if (!mapa.stairs.some((st) => st.targetMapId === mapId)) continue;
+        maps[id] = {
+          ...mapa,
+          stairs: mapa.stairs.map((st) =>
+            st.targetMapId === mapId
+              ? { ...st, targetMapId: null, targetStairId: null }
+              : st
+          ),
+        };
+      }
+
+      const nextCatalog: MapCatalog = {
+        maps,
+        defaultMapId:
+          prevCatalog.defaultMapId === mapId
+            ? Object.keys(maps)[0] ?? null
+            : prevCatalog.defaultMapId,
+      };
+
+      set({
+        mapCatalog: nextCatalog,
+        activeMapId: get().activeMapId === mapId ? null : get().activeMapId,
+      });
+      saveMapCatalog(nextCatalog).catch((e) =>
+        console.error('Erro ao salvar mapas:', e)
+      );
+    },
+
+    duplicateMap: (mapId) => {
+      const prevCatalog = get().mapCatalog;
+      const origem = prevCatalog.maps[mapId];
+      if (!origem) return null;
+
+      const novoId = `map_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const copia: GameMap = {
+        ...origem,
+        id: novoId,
+        nome: `${origem.nome} (Cópia)`,
+        terrain: { ...origem.terrain },
+        fog: { ...origem.fog },
+        stairs: origem.stairs.map((st) => ({
+          ...st,
+          id: gerarStairId(),
+          targetMapId: null,
+          targetStairId: null,
+        })),
+        placements: {},
+        criadoEm: Date.now(),
+        atualizadoEm: Date.now(),
+      };
+
+      const nextCatalog: MapCatalog = {
+        ...prevCatalog,
+        maps: { ...prevCatalog.maps, [novoId]: copia },
+      };
+      set({ mapCatalog: nextCatalog });
+      saveMapCatalog(nextCatalog).catch((e) =>
+        console.error('Erro ao salvar mapas:', e)
+      );
+      return novoId;
+    },
+
+    setDefaultMap: (mapId) => {
+      const prevCatalog = get().mapCatalog;
+      if (!prevCatalog.maps[mapId]) return;
+      const nextCatalog: MapCatalog = { ...prevCatalog, defaultMapId: mapId };
+      set({ mapCatalog: nextCatalog });
+      saveMapCatalog(nextCatalog).catch((e) =>
+        console.error('Erro ao salvar mapas:', e)
+      );
+    },
+
+    switchMap: (mapId, opts = {}) => {
+      const catalog = get().mapCatalog;
+      const destino = catalog.maps[mapId];
+      if (!destino) {
+        get().showToast('Mapa de destino não encontrado.');
+        return false;
+      }
+
+      const prev = get().appState;
+      const origemId = get().activeMapId;
+      if (origemId === mapId) return true;
+
+      // 1) Guarda o estado do tabuleiro atual no mapa de origem
+      const nextMaps = { ...catalog.maps };
+      if (origemId && nextMaps[origemId]) {
+        const atual = nextMaps[origemId];
+        const placements: Record<string, { x: number; y: number }> = {};
+        for (const ch of Object.values(prev.characters)) {
+          if (ch.position) placements[ch.id] = { ...ch.position };
+        }
+        nextMaps[origemId] = {
+          ...atual,
+          largura: prev.board.width,
+          altura: prev.board.height,
+          terrain: { ...prev.board.terrain },
+          placements,
+          atualizadoEm: Date.now(),
+        };
+      }
+
+      // 2) Novo tabuleiro a partir do mapa de destino
+      const novoBoard = boardDoMapa(destino);
+
+      // 3) Reposiciona as unidades conforme as posições guardadas no destino
+      const novosPersonagens: Record<string, Character> = {};
+      for (const [cid, ch] of Object.entries(prev.characters)) {
+        const guardada = destino.placements?.[cid] ?? null;
+        let pos: GridPoint | null = guardada;
+        if (pos) {
+          const livre = canPlaceCharacter(
+            novoBoard,
+            novosPersonagens as Record<string, Character>,
+            pos,
+            ch.width,
+            ch.height,
+            cid
+          );
+          if (!livre) pos = null;
+        }
+        novosPersonagens[cid] = { ...ch, position: pos };
+      }
+
+      // 4) Unidade que usou a escada chega à escada de chegada
+      let personagemChegou: Character | null = null;
+      if (opts.characterId) {
+        const ch = novosPersonagens[opts.characterId];
+        if (ch) {
+          const alvo = resolverChegada(
+            destino,
+            origemId,
+            opts.arrivalStairId ?? null
+          );
+          let pos: GridPoint | null = null;
+          if (alvo) {
+            if (
+              canPlaceCharacter(
+                novoBoard,
+                novosPersonagens,
+                alvo,
+                ch.width,
+                ch.height,
+                ch.id
+              )
+            ) {
+              pos = alvo;
+            } else {
+              pos = primeiraCelulaLivre(novoBoard, novosPersonagens, ch, alvo);
+            }
+          } else {
+            pos = primeiraCelulaLivre(novoBoard, novosPersonagens, ch, {
+              x: 0,
+              y: 0,
+            });
+          }
+          novosPersonagens[ch.id] = { ...ch, position: pos };
+          personagemChegou = novosPersonagens[ch.id];
+        }
+      }
+
+      // 5) Preset de visão do mapa (trancado no modo de jogo, se configurado)
+      const novoEstado: AppState = {
+        ...prev,
+        board: novoBoard,
+        characters: novosPersonagens,
+        settings: {
+          ...prev.settings,
+          fogMode: destino.fog.mode,
+          fogGlobalRange: destino.fog.range,
+          fogLocked: destino.fog.locked,
+        },
+        lastAttack: null,
+      };
+
+      set({
+        appState: novoEstado,
+        activeMapId: mapId,
+        mapCatalog: { ...catalog, maps: nextMaps },
+        attackTargeting: null,
+        movementModeCharacterId: null,
+        selectedCharacterId: personagemChegou
+          ? personagemChegou.id
+          : get().selectedCharacterId,
+      });
+
+      persistCurrent(novoEstado);
+      saveMapCatalog({ ...catalog, maps: nextMaps }).catch((e) =>
+        console.error('Erro ao salvar mapas:', e)
+      );
+
+      if (!opts.silent) {
+        const unidade = opts.characterId
+          ? prev.characters[opts.characterId]?.name
+          : null;
+        get().showToast(
+          unidade
+            ? `${unidade} passou para "${destino.nome}".`
+            : `Mapa ativo: "${destino.nome}".`
+        );
+      }
+      return true;
+    },
+
+    syncActiveMapFromBoard: () => {
+      const mapId = get().activeMapId;
+      const catalog = get().mapCatalog;
+      if (!mapId || !catalog.maps[mapId]) return;
+
+      const prev = get().appState;
+      const atual = catalog.maps[mapId];
+      const placements: Record<string, { x: number; y: number }> = {};
+      for (const ch of Object.values(prev.characters)) {
+        if (ch.position) placements[ch.id] = { ...ch.position };
+      }
+
+      const atualizado: GameMap = {
+        ...atual,
+        largura: prev.board.width,
+        altura: prev.board.height,
+        terrain: { ...prev.board.terrain },
+        placements,
+        atualizadoEm: Date.now(),
+      };
+      if (
+        atual.largura === atualizado.largura &&
+        atual.altura === atualizado.altura &&
+        JSON.stringify(atual.terrain) === JSON.stringify(atualizado.terrain)
+      ) {
+        return;
+      }
+
+      const nextCatalog: MapCatalog = {
+        ...catalog,
+        maps: { ...catalog.maps, [mapId]: atualizado },
+      };
+      set({ mapCatalog: nextCatalog });
+      saveMapCatalog(nextCatalog).catch((e) =>
+        console.error('Erro ao salvar mapas:', e)
+      );
     },
 
     saveFichaRecord: async (ficha, syncLinkedBoardChars = true) => {
@@ -890,6 +1268,11 @@ export const useGameStore = create<GameStore>((set, get) => {
 
       const arsenal = await loadOrSeedArsenalCatalog(saved ? saved.state : null);
       const bestiary = await loadOrSeedBestiaryCatalog();
+      const boardParaMapas = saved ? saved.state.board : createSampleEncounterState().board;
+      const mapsCatalog = await loadOrSeedMapCatalog(
+        boardParaMapas,
+        saved ? saved.state.matchName : 'Ruínas Superiores'
+      );
 
       if (saved) {
         const baseNorm = normalizeAppState(saved.state);
@@ -902,12 +1285,33 @@ export const useGameStore = create<GameStore>((set, get) => {
           normalized.combat.activeCharacterId ||
           Object.keys(normalized.characters)[0] ||
           null;
+        const activeMapId =
+          normalized.board.id && mapsCatalog.maps[normalized.board.id]
+            ? normalized.board.id
+            : mapsCatalog.defaultMapId ?? Object.keys(mapsCatalog.maps)[0] ?? null;
+
+        // O mapa ativo manda no trancamento da visão (predefinição do mestre)
+        const mapaAtivoInicial = activeMapId ? mapsCatalog.maps[activeMapId] : null;
+        const estadoInicial: AppState = mapaAtivoInicial?.fog.locked
+          ? {
+              ...normalized,
+              settings: {
+                ...normalized.settings,
+                fogMode: mapaAtivoInicial.fog.mode,
+                fogGlobalRange: mapaAtivoInicial.fog.range,
+                fogLocked: true,
+              },
+            }
+          : normalized;
+
         set({
           initialized: true,
           activeMatchId: saved.id,
-          appState: normalized,
+          appState: estadoInicial,
           arsenalCatalog: arsenal,
           bestiaryCatalog: bestiary,
+          mapCatalog: mapsCatalog,
+          activeMapId,
           fichasList: fichas,
           selectedCharacterId: firstCharId,
           storageEstimate: est,
@@ -927,6 +1331,12 @@ export const useGameStore = create<GameStore>((set, get) => {
           appState: sample,
           arsenalCatalog: arsenal,
           bestiaryCatalog: bestiary,
+          mapCatalog: mapsCatalog,
+          activeMapId:
+            mapsCatalog.maps[sample.board.id]
+              ? sample.board.id
+              : mapsCatalog.defaultMapId,
+
           fichasList: fichas,
           selectedCharacterId: 'char_lyra',
           storageEstimate: est,
@@ -1102,6 +1512,12 @@ export const useGameStore = create<GameStore>((set, get) => {
     // === Névoa de Visão (Exploração) — apenas visualização, não altera dados ===
     setFogMode: (mode) => {
       const prev = get().appState;
+      if (prev.settings.fogLocked) {
+        get().showToast(
+          'A visão deste mapa vem da predefinição do mapa. Altera-a em Glossário → Locais → Mapas.'
+        );
+        return;
+      }
       const next: AppState = {
         ...prev,
         settings: { ...prev.settings, fogMode: mode },
@@ -1127,6 +1543,7 @@ export const useGameStore = create<GameStore>((set, get) => {
 
     setFogGlobalRange: (range) => {
       const prev = get().appState;
+      if (prev.settings.fogLocked) return;
       const value = Math.max(1, Math.min(40, Math.round(range) || 8));
       const next: AppState = {
         ...prev,
@@ -1437,6 +1854,24 @@ export const useGameStore = create<GameStore>((set, get) => {
         movementModeCharacterId: null,
       });
       persistCurrent(next);
+
+      // Escadas: ao pisar uma escada ligada, muda automaticamente de mapa
+      const mapaAtivo = get().activeMapId
+        ? get().mapCatalog.maps[get().activeMapId as string] ?? null
+        : null;
+      const escada = escadaSobUnidade(mapaAtivo, next.characters[characterId]);
+      if (escada && escada.targetMapId) {
+        if (get().mapCatalog.maps[escada.targetMapId]) {
+          get().switchMap(escada.targetMapId as string, {
+            characterId,
+            arrivalStairId: escada.targetStairId,
+          });
+        } else {
+          get().showToast(
+            'Esta escada aponta para um mapa que já não existe. Liga-a novamente no Glossário → Locais → Mapas.'
+          );
+        }
+      }
       return true;
     },
 

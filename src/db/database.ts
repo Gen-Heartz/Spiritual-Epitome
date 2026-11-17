@@ -14,11 +14,14 @@ import {
 } from '../types';
 import { createDefaultArsenalCatalog } from '../data/presets';
 import { createDefaultBestiaryCatalog } from '../data/bestiaryPresets';
+import { createDefaultMapCatalog } from '../data/mapPresets';
 import {
   BestiaryCatalog,
   BestiaryMonster,
 } from '../bestiary/bestiaryTypes';
 import { normalizarMonstro } from '../bestiary/bestiaryEngine';
+import { GameMap, MapCatalog } from '../maps/mapTypes';
+import { normalizarMapa } from '../maps/mapEngine';
 import { EpitomeFicha } from '../epitome/epitomeTypes';
 import {
   DEFAULT_SAMPLE_FICHAS,
@@ -277,6 +280,48 @@ export async function loadOrSeedBestiaryCatalog(): Promise<BestiaryCatalog> {
   return seeded;
 }
 
+// === Mapas do Tabuleiro (Glossário -> Locais -> Mapas) ===
+
+export const MAPAS_GLOSSARIO_ID = 'mapas_locais_v1';
+
+export async function saveMapCatalog(catalog: MapCatalog): Promise<void> {
+  const clean: Record<string, GameMap> = {};
+  for (const [id, mapa] of Object.entries(catalog.maps || {})) {
+    if (!mapa) continue;
+    clean[id] = mapa;
+  }
+
+  await db.glossario.put({
+    id: MAPAS_GLOSSARIO_ID,
+    termo: 'Mapas do Tabuleiro',
+    maps: clean,
+    defaultMapId: catalog.defaultMapId ?? null,
+    updatedAt: Date.now(),
+  });
+}
+
+export async function loadOrSeedMapCatalog(
+  baseBoard?: AppState['board'] | null,
+  baseName?: string
+): Promise<MapCatalog> {
+  const rec = await db.glossario.get(MAPAS_GLOSSARIO_ID);
+  if (rec && rec.maps && typeof rec.maps === 'object') {
+    const maps: Record<string, GameMap> = {};
+    for (const [id, raw] of Object.entries(rec.maps as Record<string, GameMap>)) {
+      maps[id] = normalizarMapa(raw, id);
+    }
+    const defaultMapId =
+      typeof rec.defaultMapId === 'string' && maps[rec.defaultMapId]
+        ? rec.defaultMapId
+        : Object.keys(maps)[0] ?? null;
+    return { maps, defaultMapId };
+  }
+
+  const seeded = createDefaultMapCatalog(baseBoard ?? undefined, baseName);
+  await saveMapCatalog(seeded);
+  return seeded;
+}
+
 // === Modelos Reutilizáveis ===
 
 export async function saveCharacterTemplate(
@@ -491,6 +536,7 @@ export async function parseMatchPayloadToAppState(
       fogRangeMode: 'global',
       fogGlobalRange: 8,
       fogIntensity: 1,
+      fogLocked: false,
       ...(parsed.settings || {}),
     },
     lastAttack:

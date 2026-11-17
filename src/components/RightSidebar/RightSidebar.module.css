@@ -224,6 +224,11 @@
   gap: 4px;
 }
 
+.dirBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .dirBtn {
   padding: 5px 4px;
   border-radius: 4px;

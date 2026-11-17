@@ -162,6 +162,8 @@ export interface SystemSettings {
   fogGlobalRange?: number;
   /** Opacidade/força da escuridão fora da visão (0.35–1) */
   fogIntensity?: number;
+  /** Predefinição do mapa ativo: impede alterar modo/alcance no modo de jogo */
+  fogLocked?: boolean;
 }
 
 // === Último Ataque Resolvido (área persistente no grid) ===

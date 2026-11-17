@@ -46,6 +46,23 @@ export const SettingsModal: React.FC = () => {
               regras. No Modo Dia o tabuleiro mantém-se totalmente visível.
             </span>
 
+            {settings.fogLocked === true && (
+              <span
+                style={{
+                  fontSize: 11.5,
+                  color: '#fca5a5',
+                  border: '1px solid rgba(239, 68, 68, 0.45)',
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  borderRadius: 4,
+                  padding: '6px 9px',
+                }}
+              >
+                &#128274; Visão trancada pela predefinição do mapa ativo.
+                Desbloqueia em Glossário → Locais → Mapas → Predefinição de
+                Visão.
+              </span>
+            )}
+
             <div className={styles.chipRow}>
               <button
                 type="button"
@@ -55,6 +72,7 @@ export const SettingsModal: React.FC = () => {
                     : ''
                 }`}
                 onClick={() => setFogMode('day')}
+                disabled={settings.fogLocked === true}
               >
                 Modo Dia (mapa completo)
               </button>
@@ -64,6 +82,7 @@ export const SettingsModal: React.FC = () => {
                   settings.fogMode === 'exploration' ? styles.chipActive : ''
                 }`}
                 onClick={() => setFogMode('exploration')}
+                disabled={settings.fogLocked === true}
               >
                 Modo Exploração (visão limitada)
               </button>

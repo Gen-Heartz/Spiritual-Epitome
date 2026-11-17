@@ -46,6 +46,7 @@ export function createBlankMatchState(
       fogRangeMode: 'global',
       fogGlobalRange: 8,
       fogIntensity: 1,
+      fogLocked: false,
     },
     lastAttack: null,
   };
@@ -459,6 +460,7 @@ export function createSampleEncounterState(): AppState {
       fogRangeMode: 'global',
       fogGlobalRange: 8,
       fogIntensity: 1,
+      fogLocked: false,
     },
     lastAttack: null,
   };

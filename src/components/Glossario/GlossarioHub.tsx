@@ -34,7 +34,7 @@ export const GlossarioHub: React.FC = () => {
           showToast('Plantas — seção estruturada, conteúdo em breve.');
           break;
         case '4':
-          showToast('Locais — seção estruturada, conteúdo em breve.');
+          setActiveScreen('glossario_locais');
           break;
       }
     };
@@ -110,19 +110,17 @@ export const GlossarioHub: React.FC = () => {
             <span className={styles.btnDesc}>Herbário &amp; Alquimia</span>
           </button>
 
-          {/* 4. Locais */}
+          {/* 4. Locais — hub com Mapas (ativo) e Regiões */}
           <button
             type="button"
-            className={`${styles.cardBtn} ${styles.cardBtnStructure}`}
-            onClick={() =>
-              showToast('Locais — seção estruturada, conteúdo em breve.')
-            }
+            className={`${styles.cardBtn} ${styles.cardBtnActive}`}
+            onClick={() => setActiveScreen('glossario_locais')}
           >
-            <span className={styles.badgeSoon}>Em breve</span>
+            <span className={styles.badge}>2 seções</span>
             <span className={styles.hotkey}>4</span>
             <span className={styles.icon}>&#9968;</span>
             <span className={styles.btnTitle}>Locais</span>
-            <span className={styles.btnDesc}>Reinos, Ruínas &amp; Regiões</span>
+            <span className={styles.btnDesc}>Mapas do Tabuleiro &amp; Regiões</span>
           </button>
         </nav>
 

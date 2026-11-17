@@ -726,11 +726,20 @@ export const RightSidebar: React.FC = () => {
                 <div className={styles.blockTitle}>
                   <span>Visão (Névoa)</span>
                   <span>
-                    {appState.settings.fogMode === 'exploration'
+                    {appState.settings.fogLocked === true
+                      ? '🔒 Trancado'
+                      : appState.settings.fogMode === 'exploration'
                       ? 'Ativo'
                       : 'Modo Dia'}
                   </span>
                 </div>
+
+                {appState.settings.fogLocked === true && (
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                    A visão deste mapa está fixa pelo Mestre (Glossário → Locais
+                    → Mapas).
+                  </div>
+                )}
 
                 <div
                   style={{
@@ -757,6 +766,7 @@ export const RightSidebar: React.FC = () => {
                       className={styles.dirBtn}
                       style={{ width: 58, textAlign: 'center', padding: '4px 6px' }}
                       value={selectedChar.visionRange ?? ''}
+                      disabled={appState.settings.fogLocked === true}
                       placeholder={String(
                         appState.settings.fogGlobalRange ?? 8
                       )}
@@ -774,6 +784,7 @@ export const RightSidebar: React.FC = () => {
 
                   <button
                     className={styles.dirBtn}
+                    disabled={appState.settings.fogLocked === true}
                     onClick={() =>
                       setCharacterVisionRange(selectedChar.id, null)
                     }
@@ -789,6 +800,7 @@ export const RightSidebar: React.FC = () => {
                         : ''
                     }`}
                     onClick={() => setFogRangeMode('individual')}
+                    disabled={appState.settings.fogLocked === true}
                     title="Passar o tabuleiro a usar o alcance individual de cada unidade"
                   >
                     Individual

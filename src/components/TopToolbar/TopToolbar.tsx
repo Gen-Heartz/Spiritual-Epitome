@@ -53,7 +53,16 @@ export const TopToolbar: React.FC = () => {
   const [dimW, setDimW] = useState(String(appState.board.width));
   const [dimH, setDimH] = useState(String(appState.board.height));
 
+  // Mapa ativo (Glossário → Locais → Mapas)
+  const activeMapId = useGameStore((s) => s.activeMapId);
+  const mapCatalog = useGameStore((s) => s.mapCatalog);
+  const activeMap = activeMapId ? mapCatalog.maps[activeMapId] ?? null : null;
+  const activeMapName =
+    activeMap?.nome ?? (activeMapId ? 'Mapa do Tabuleiro' : null);
+
   const fogMode = appState.settings.fogMode ?? 'day';
+  // Mapa ativo com predefinição de visão trancada: controlos desativados em jogo
+  const fogLocked = appState.settings.fogLocked === true;
   const fogRangeMode = appState.settings.fogRangeMode ?? 'global';
   const fogGlobalRange = appState.settings.fogGlobalRange ?? 8;
   const [fogRangeInput, setFogRangeInput] = useState(String(fogGlobalRange));
@@ -109,6 +118,14 @@ export const TopToolbar: React.FC = () => {
           <Shield size={15} color="#ecc050" />
           <span className={styles.brandTitle}>TABULEIRO</span>
           <span className={styles.matchSubtitle}>• {appState.matchName}</span>
+          {activeMapName && (
+            <span
+              className={styles.mapChip}
+              title="Mapa ativo — editar em Glossário → Locais → Mapas"
+            >
+              &#9968; {activeMapName}
+            </span>
+          )}
         </button>
 
         <div className={styles.divider} />
@@ -168,14 +185,21 @@ export const TopToolbar: React.FC = () => {
 
         {/* Névoa de Visão (Exploração) */}
         <div
-          className={styles.toolGroup}
-          title="Modo de visualização do tabuleiro: Dia (mapa completo) ou Exploração (visão limitada)"
+          className={`${styles.toolGroup} ${
+            fogLocked ? styles.toolGroupLocked : ''
+          }`}
+          title={
+            fogLocked
+              ? 'Visão trancada pela predefinição deste mapa — altera em Glossário → Locais → Mapas'
+              : 'Modo de visualização do tabuleiro: Dia (mapa completo) ou Exploração (visão limitada)'
+          }
         >
           <button
             className={`${styles.toolBtn} ${
               fogMode === 'day' ? styles.toolBtnActive : ''
             }`}
             onClick={() => setFogMode('day')}
+            disabled={fogLocked}
           >
             <Sun size={14} />
             <span>Dia</span>
@@ -185,17 +209,27 @@ export const TopToolbar: React.FC = () => {
               fogMode === 'exploration' ? styles.toolBtnActive : ''
             }`}
             onClick={() => setFogMode('exploration')}
+            disabled={fogLocked}
           >
             <Moon size={14} />
             <span>Exploração</span>
           </button>
+          {fogLocked && (
+            <span style={{ fontSize: 11, opacity: 0.85, paddingRight: 4 }}>
+              &#128274;
+            </span>
+          )}
         </div>
 
         {fogMode === 'exploration' && (
           <div
-            className={styles.dimBox}
+            className={`${styles.dimBox} ${
+              fogLocked ? styles.toolGroupLocked : ''
+            }`}
             title={
-              fogRangeMode === 'global'
+              fogLocked
+                ? 'Visão trancada pela predefinição deste mapa'
+                : fogRangeMode === 'global'
                 ? 'Alcance de visão global (quadrados)'
                 : 'Alcance global — cada unidade pode ter o seu valor na barra lateral'
             }
@@ -210,6 +244,7 @@ export const TopToolbar: React.FC = () => {
               onChange={(e) => setFogRangeInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && applyFogRange()}
               onBlur={applyFogRange}
+              disabled={fogLocked}
             />
             <div className={styles.toolGroup} style={{ padding: 0, border: 'none', background: 'transparent' }}>
               <button
@@ -217,6 +252,7 @@ export const TopToolbar: React.FC = () => {
                   fogRangeMode === 'global' ? styles.toolBtnActive : ''
                 }`}
                 onClick={() => setFogRangeMode('global')}
+                disabled={fogLocked}
                 title="Usar um alcance único para todas as unidades"
                 style={{ fontSize: 10.5, padding: '3px 6px' }}
               >
@@ -227,6 +263,7 @@ export const TopToolbar: React.FC = () => {
                   fogRangeMode === 'individual' ? styles.toolBtnActive : ''
                 }`}
                 onClick={() => setFogRangeMode('individual')}
+                disabled={fogLocked}
                 title="Cada unidade usa o seu próprio alcance (definido na barra lateral direita)"
                 style={{ fontSize: 10.5, padding: '3px 6px' }}
               >

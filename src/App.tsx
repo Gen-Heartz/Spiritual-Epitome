@@ -4,6 +4,8 @@ import { HomeMenu } from './components/GrimorioHome/HomeMenu';
 import { GlossarioHub } from './components/Glossario/GlossarioHub';
 import { GlossarioArmas } from './components/Glossario/GlossarioArmas';
 import { GlossarioMonstros } from './components/Glossario/GlossarioMonstros';
+import { GlossarioLocais } from './components/Glossario/GlossarioLocais';
+import { GlossarioMapas } from './components/Glossario/GlossarioMapas';
 import { FichasHub } from './components/Fichas/FichasHub';
 import { FichaSheet } from './components/Fichas/FichaSheet';
 import { JogarSplitView } from './components/Fichas/JogarSplitView';
@@ -54,6 +56,10 @@ export const App: React.FC = () => {
       )}
 
       {activeScreen === 'glossario_monstros' && <GlossarioMonstros />}
+
+      {activeScreen === 'glossario_locais' && <GlossarioLocais />}
+
+      {activeScreen === 'glossario_mapas' && <GlossarioMapas />}
 
       {activeScreen === 'fichas' && <FichasHub />}
 
