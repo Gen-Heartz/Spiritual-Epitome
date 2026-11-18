@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
@@ -77,6 +77,19 @@ export const GlossarioMapas: React.FC = () => {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<GameMap | null>(null);
+  // Arrasto para pintar terreno (clique + arrastar = pincel)
+  const draftRef = useRef<GameMap | null>(null);
+  const strokeRef = useRef<{
+    mapId: string;
+    tool: 'normal' | 'difficult' | 'impassable';
+    /** `true` pinta, `false` apaga (decidido no primeiro quadrado) */
+    aplicar: boolean;
+    visitadas: Set<string>;
+    terrain: Record<string, TerrainType>;
+    /** Último quadrado visitado (para interpolar arrastos rápidos) */
+    ultimo: { x: number; y: number };
+  } | null>(null);
+  const [pintando, setPintando] = useState(false);
   const [tool, setTool] = useState<EditorTool>('impassable');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [previewFog, setPreviewFog] = useState(true);
@@ -134,6 +147,16 @@ export const GlossarioMapas: React.FC = () => {
     setConfirmDeleteId(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeMap?.id]);
+
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
+
+  // Sair do mapa em edição cancela uma pincelada a meio
+  useEffect(() => {
+    strokeRef.current = null;
+    setPintando(false);
+  }, [draft?.id]);
 
   const commit = (mapa: GameMap, silent = true) => {
     setDraft(mapa);
@@ -227,6 +250,120 @@ export const GlossarioMapas: React.FC = () => {
     };
     patch({ stairs: [...draft.stairs, nova] });
   };
+
+  /* ---------------------- Pincel (arrastar para pintar) ---------------------- */
+
+  /** Início da pincelada: pinta o primeiro quadrado e guarda a área a alterar. */
+  const iniciarPintura = (x: number, y: number) => {
+    if (!draft) return;
+
+    // Escadas continuam a ser um clique = uma escada (sem arrasto)
+    if (tool === 'stair_up' || tool === 'stair_down') {
+      pintarCelula(x, y);
+      return;
+    }
+
+    const k = chaveCelula(x, y);
+    const terrain = { ...draft.terrain };
+
+    // O primeiro quadrado decide se a pincelada pinta ou apaga:
+    // · "Limpar" apaga sempre
+    // · começar sobre o mesmo terreno apaga (funciona como borracha)
+    // · caso contrário pinta
+    const aplicar = tool !== 'normal' && terrain[k] !== tool;
+    if (aplicar) terrain[k] = tool as TerrainType;
+    else delete terrain[k];
+
+    strokeRef.current = {
+      mapId: draft.id,
+      tool: tool as 'normal' | 'difficult' | 'impassable',
+      aplicar,
+      visitadas: new Set([k]),
+      terrain,
+      ultimo: { x, y },
+    };
+    setPintando(true);
+    setDraft({ ...draft, terrain });
+  };
+
+  /** Passar por cima de outro quadrado com o botão pressionado continua a pintar. */
+  const continuarPintura = (x: number, y: number) => {
+    const stroke = strokeRef.current;
+    if (!stroke) return;
+    const atual = draftRef.current;
+    if (!atual || atual.id !== stroke.mapId) return;
+
+    const pintarUm = (cx: number, cy: number) => {
+      const k = chaveCelula(cx, cy);
+      if (stroke.visitadas.has(k)) return;
+      stroke.visitadas.add(k);
+      // Durante o arrasto repete sempre a mesma ação da pincelada
+      if (stroke.aplicar) {
+        stroke.terrain[k] = stroke.tool as TerrainType;
+      } else if (
+        stroke.tool === 'normal' ||
+        stroke.terrain[k] === stroke.tool
+      ) {
+        delete stroke.terrain[k];
+      }
+    };
+
+    // Arrastos rápidos saltam quadrados: interpola uma linha entre o último
+    // quadrado visitado e o atual (Bresenham) para a área ficar contínua.
+    const { x: x0, y: y0 } = stroke.ultimo;
+    const dx = Math.abs(x - x0);
+    const dy = Math.abs(y - y0);
+    const sx = x0 < x ? 1 : -1;
+    const sy = y0 < y ? 1 : -1;
+    let err = dx - dy;
+    let cx = x0;
+    let cy = y0;
+    let guarda = 0;
+    while (guarda++ < 512) {
+      pintarUm(cx, cy);
+      if (cx === x && cy === y) break;
+      const e2 = 2 * err;
+      if (e2 > -dy) {
+        err -= dy;
+        cx += sx;
+      }
+      if (e2 < dx) {
+        err += dx;
+        cy += sy;
+      }
+    }
+
+    stroke.ultimo = { x, y };
+    setDraft({ ...atual, terrain: { ...stroke.terrain } });
+  };
+
+  /** Fim da pincelada: grava o mapa uma única vez. */
+  const terminarPintura = useCallback(() => {
+    const stroke = strokeRef.current;
+    if (!stroke) return;
+    strokeRef.current = null;
+    setPintando(false);
+
+    const atual = draftRef.current;
+    if (!atual || atual.id !== stroke.mapId) return;
+
+    const mapa: GameMap = { ...atual, terrain: { ...stroke.terrain } };
+    setDraft(mapa);
+    upsertMap(mapa);
+  }, [upsertMap]);
+
+  // Soltar o botão em qualquer ponto da janela termina a pincelada
+  useEffect(() => {
+    const aoSoltar = () => terminarPintura();
+    window.addEventListener('pointerup', aoSoltar);
+    window.addEventListener('pointercancel', aoSoltar);
+    window.addEventListener('blur', aoSoltar);
+    return () => {
+      window.removeEventListener('pointerup', aoSoltar);
+      window.removeEventListener('pointercancel', aoSoltar);
+      window.removeEventListener('blur', aoSoltar);
+    };
+  }, [terminarPintura]);
 
   const atualizarEscada = (stairId: string, partial: Partial<MapStair>) => {
     if (!draft) return;
@@ -1048,7 +1185,7 @@ export const GlossarioMapas: React.FC = () => {
 
                   <div className={styles.fogPreviewBar}>
                     <span>
-                      Clique para pintar. Ferramenta:{' '}
+                      Clique e arraste para pintar áreas. Ferramenta:{' '}
                       <strong>
                         {tool === 'stair_up'
                           ? 'Escada de subida'
@@ -1062,6 +1199,7 @@ export const GlossarioMapas: React.FC = () => {
                       </strong>
                     </span>
                     <span style={{ opacity: 0.7 }}>
+                      {pintando ? 'A pintar… • ' : ''}
                       {draft.largura}×{draft.altura} • {draft.stairs.length}{' '}
                       escadas
                       {draft.fog.mode === 'exploration' && previewFog
@@ -1072,7 +1210,9 @@ export const GlossarioMapas: React.FC = () => {
 
                   <div className={styles.gridScroll}>
                     <div
-                      className={styles.grid}
+                      className={`${styles.grid} ${
+                        pintando ? styles.gridPainting : ''
+                      }`}
                       style={{
                         gridTemplateColumns: `repeat(${draft.largura}, 26px)`,
                         gridTemplateRows: `repeat(${draft.altura}, 26px)`,
@@ -1108,7 +1248,12 @@ export const GlossarioMapas: React.FC = () => {
                               background:
                                 (x + y) % 2 === 0 ? '#151b26' : '#181f2c',
                             }}
-                            onMouseDown={() => pintarCelula(x, y)}
+                            onPointerDown={(e) => {
+                              e.preventDefault();
+                              iniciarPintura(x, y);
+                            }}
+                            onPointerEnter={() => continuarPintura(x, y)}
+                            onDragStart={(e) => e.preventDefault()}
                             title={`(${x}, ${y})${
                               escada ? ` — ${escada.label}` : ''
                             }`}

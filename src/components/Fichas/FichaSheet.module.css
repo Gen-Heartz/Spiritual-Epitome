@@ -662,6 +662,17 @@
   background: var(--color-dourado-300);
 }
 
+.mochilaBadgeIdle {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 99px;
+  color: var(--color-pergaminho-300);
+  background: rgba(28, 24, 19, 0.9);
+  border: 1px solid rgba(187, 169, 139, 0.3);
+}
+
 .mochilaActions {
   display: flex;
   align-items: center;

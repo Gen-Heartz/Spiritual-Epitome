@@ -446,6 +446,14 @@
 
 /* ---- Grid do mapa ---- */
 
+.gridPainting {
+  cursor: crosshair;
+}
+
+.gridPainting .cell {
+  cursor: crosshair;
+}
+
 .gridScroll {
   overflow: auto;
   max-width: 100%;
@@ -471,9 +479,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: crosshair;
   font-size: 13px;
   line-height: 1;
+  /* Permite arrastar para pintar sem o browser tentar selecionar/rolar */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.cell:hover {
+  outline: 1px solid rgba(234, 197, 122, 0.75);
+  outline-offset: -1px;
 }
 
 .cellImpassable {

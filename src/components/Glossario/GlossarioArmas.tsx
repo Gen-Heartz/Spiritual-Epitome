@@ -608,9 +608,10 @@ export const GlossarioArmas: React.FC = () => {
                       onBlur={() => commitWeaponPatch({ description }, true)}
                     />
                     <span className={styles.hint}>
-                      Esta arma é independente: qualquer personagem pode guardá-la na{' '}
-                      <strong>Zona de Armas da Mochila</strong> (aba Inventário da Ficha) e marcá-la como{' '}
-                      <strong>Equipada</strong>.
+                      Esta arma é independente: qualquer personagem pode adicioná-la na{' '}
+                      <strong>aba Combate</strong> da Ficha e marcá-la como{' '}
+                      <strong>Equipada</strong>. A aba Inventário mostra apenas a
+                      lista (nome, dano e estado).
                     </span>
                   </div>
                 </section>

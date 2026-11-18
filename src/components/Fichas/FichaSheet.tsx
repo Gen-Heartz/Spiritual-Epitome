@@ -3,6 +3,7 @@ import {
   Check,
   ChevronDown,
   ChevronLeft,
+  Circle,
   Hammer,
   LayoutGrid,
   Swords,
@@ -212,7 +213,7 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
     setActiveScreen('tabuleiro');
   };
 
-  // === Handlers da Zona de Armas na Mochila ===
+  // === Handlers das armas do personagem (aba Combate) ===
   const handleAddWeaponToMochila = () => {
     const wp = arsenalCatalog.weapons[selectedArsenalToAdd];
     if (!wp) return;
@@ -230,7 +231,7 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
         mochilaArmasIds: [...prev.mochilaArmasIds, wp.id],
       };
     });
-    showToast(`"${wp.name}" adicionada à Zona de Armas da Mochila!`);
+    showToast(`"${wp.name}" adicionada às armas do personagem.`);
   };
 
   const handleToggleEquipMochilaWeapon = (weaponId: string) => {
@@ -262,7 +263,7 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
       return { ...prev, mochilaArmasIds: nextIds };
     });
     if (wp) {
-      showToast(`"${wp.name}" removida da Mochila.`);
+      showToast(`"${wp.name}" removida do personagem.`);
     }
   };
 
@@ -1294,111 +1295,227 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
 
             <hr className={`divisor-dourado ${styles.divider}`} />
 
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 8,
-                flexWrap: 'wrap',
-              }}
-            >
-              <label className={`${styles.label} ${styles.labelSm}`}>
-                Arma Equipada{' '}
-                {ficha.armaEquipadaId &&
-                arsenalCatalog.weapons[ficha.armaEquipadaId] ? (
-                  <span className={styles.mochilaBadgePorte}>
-                    Vinculada à Mochila
-                  </span>
-                ) : null}
-              </label>
+            {/* === ZONA DE ARMAS: gestão completa (equipar, adicionar, remover) === */}
+            <div className={styles.mochilaWeaponsBox}>
+              <div className={styles.mochilaWeaponsHeader}>
+                <label className={styles.label} style={{ margin: 0 }}>
+                  <Swords
+                    size={12}
+                    style={{ display: 'inline-block', verticalAlign: '-2px' }}
+                  />{' '}
+                  Armas Equipadas{' '}
+                  <TooltipBadge text="Armas do Arsenal equipadas neste personagem. A arma equipada preenche o Dano Arma Total (Dano Base + Manualidade × 3) e leva os seus golpes e áreas ao Tabuleiro. A gestão das armas do personagem faz-se aqui; o Inventário mostra apenas a lista." />
+                </label>
 
-              {mochilaWeapons.length > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <button
+                  type="button"
+                  className={styles.mochilaEquipBtn}
+                  onClick={handleOpenArsenalFromSheet}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
+                >
+                  <Hammer size={12} /> Forjar / Editar no Arsenal
+                </button>
+              </div>
+
+              <div className={styles.mochilaPickerRow}>
+                {availableArsenalToAdd.length > 0 ? (
+                  <>
+                    <select
+                      className={styles.select}
+                      style={{ flex: 1, minWidth: 210 }}
+                      value={selectedArsenalToAdd}
+                      onChange={(e) => setSelectedArsenalToAdd(e.target.value)}
+                    >
+                      {availableArsenalToAdd.map((wp) => {
+                        const porte = inferEpitomeTipoFromWeapon(wp);
+                        return (
+                          <option key={wp.id} value={wp.id}>
+                            {wp.name} — {ARMA_TIPO_LABELS[porte]} • Base +
+                            {wp.baseDamage} • Alc. {wp.range}q (
+                            {wp.attackIds.length} atq.)
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <button
+                      type="button"
+                      className={styles.btnPrimary}
+                      style={{ padding: '7px 14px' }}
+                      onClick={handleAddWeaponToMochila}
+                    >
+                      + Adicionar Arma
+                    </button>
+                  </>
+                ) : (
                   <span
                     style={{
-                      fontSize: 11,
+                      fontSize: 12.5,
+                      fontStyle: 'italic',
                       color: 'var(--color-pergaminho-400)',
                     }}
                   >
-                    Da Mochila:
+                    {allArsenalWeapons.length === 0
+                      ? 'Nenhuma arma cadastrada no Arsenal ainda. Clique em "Forjar / Editar no Arsenal".'
+                      : 'Todas as armas disponíveis do Arsenal já estão neste personagem.'}
                   </span>
-                  <select
-                    className={styles.select}
-                    style={{ width: 'auto', padding: '4px 8px', fontSize: 12 }}
-                    value={ficha.armaEquipadaId || ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (!val) {
-                        updateFicha((p) => equiparArmaDoArsenalNaFicha(p, null));
-                      } else {
-                        const wp = arsenalCatalog.weapons[val];
-                        if (wp) {
-                          updateFicha((p) => equiparArmaDoArsenalNaFicha(p, wp));
-                        }
-                      }
-                    }}
-                  >
-                    <option value="">-- Nenhuma (Manual / Desarmado) --</option>
-                    {mochilaWeapons.map((wp) => (
-                      <option key={wp.id} value={wp.id}>
-                        {wp.name} ({ARMA_TIPO_LABELS[inferEpitomeTipoFromWeapon(wp)]}{' '}
-                        • +{wp.baseDamage})
-                      </option>
-                    ))}
-                  </select>
+                )}
+              </div>
+
+              {mochilaWeapons.length === 0 ? (
+                <div
+                  style={{
+                    padding: '10px 6px',
+                    textAlign: 'center',
+                    fontSize: 13,
+                    fontStyle: 'italic',
+                    color: 'var(--color-pergaminho-500)',
+                  }}
+                >
+                  Nenhuma arma neste personagem. Escolhe uma arma do Arsenal
+                  acima ou usa a arma manual abaixo.
+                </div>
+              ) : (
+                <div className={styles.mochilaWeaponList}>
+                  {mochilaWeapons.map((wp) => {
+                    const isEquipped = ficha.armaEquipadaId === wp.id;
+                    const porte = inferEpitomeTipoFromWeapon(wp);
+                    const danoComManualidade =
+                      wp.baseDamage + ficha._pericias.manualidade * 3;
+                    const attackNames = wp.attackIds
+                      .map((aid) => arsenalCatalog.attacks[aid]?.name)
+                      .filter(Boolean);
+
+                    return (
+                      <div
+                        key={wp.id}
+                        className={`${styles.mochilaWeaponCard} ${
+                          isEquipped ? styles.mochilaWeaponCardEquipped : ''
+                        }`}
+                      >
+                        <div className={styles.mochilaWeaponLeft}>
+                          <TokenAvatar
+                            imageId={wp.iconId}
+                            alt={wp.name}
+                            size={34}
+                          />
+                          <div style={{ minWidth: 0 }}>
+                            <div className={styles.mochilaWeaponName}>
+                              <span>{wp.name}</span>
+                              <span className={styles.mochilaBadgePorte}>
+                                {ARMA_TIPO_LABELS[porte]}
+                              </span>
+                              {isEquipped && (
+                                <span
+                                  className={styles.mochilaBadgeEquipped}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 3,
+                                  }}
+                                >
+                                  <Check size={10} /> Equipada
+                                </span>
+                              )}
+                            </div>
+                            <div className={styles.mochilaWeaponMeta}>
+                              Dano Base +{wp.baseDamage} →{' '}
+                              <strong>
+                                Total c/ Manualidade: {danoComManualidade}
+                              </strong>{' '}
+                              • Alcance {wp.range}q
+                            </div>
+                            {attackNames.length > 0 && (
+                              <div className={styles.mochilaWeaponAttacks}>
+                                Golpes: {attackNames.join(', ')}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className={styles.mochilaActions}>
+                          <button
+                            type="button"
+                            className={styles.mochilaEquipBtn}
+                            onClick={() => handleToggleEquipMochilaWeapon(wp.id)}
+                          >
+                            {isEquipped ? 'Desequipar' : 'Equipar'}
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.mochilaRemoveBtn}
+                            onClick={() => handleRemoveWeaponFromMochila(wp.id)}
+                            title="Retirar arma do personagem"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
-            </div>
 
-            <div className={styles.row3} style={{ marginTop: 6 }}>
-              <select
-                className={styles.select}
-                value={ficha.tipoArma}
-                onChange={(e) =>
-                  updateFicha((p) => ({
-                    ...p,
-                    armaEquipadaId: null,
-                    tipoArma: e.target.value as ArmaTipoKey,
-                  }))
-                }
-              >
-                <option value="">Tipo</option>
-                <option value="Curta">Curta</option>
-                <option value="Media">Média</option>
-                <option value="Longa">Longa</option>
-                <option value="Magica">Mágica</option>
-              </select>
+              {/* Arma manual (sem registro no Arsenal) */}
+              <div>
+                <label className={`${styles.label} ${styles.labelSm}`}>
+                  Arma Manual{' '}
+                  <TooltipBadge text="Usa este bloco apenas quando a arma não existe no Arsenal. Preencher qualquer campo desequipa a arma do Arsenal." />
+                </label>
+                <div className={styles.row3} style={{ marginTop: 6 }}>
+                  <select
+                    className={styles.select}
+                    value={ficha.tipoArma}
+                    onChange={(e) =>
+                      updateFicha((p) => ({
+                        ...p,
+                        armaEquipadaId: null,
+                        tipoArma: e.target.value as ArmaTipoKey,
+                      }))
+                    }
+                  >
+                    <option value="">Tipo</option>
+                    <option value="Curta">Curta</option>
+                    <option value="Media">Média</option>
+                    <option value="Longa">Longa</option>
+                    <option value="Magica">Mágica</option>
+                  </select>
 
-              <input
-                type="text"
-                className={`${styles.input} ${styles.inputCenter}`}
-                placeholder="Nome da Arma"
-                maxLength={40}
-                value={ficha.nomeArma}
-                onChange={(e) =>
-                  updateFicha((p) => ({
-                    ...p,
-                    armaEquipadaId: null,
-                    nomeArma: e.target.value,
-                  }))
-                }
-              />
+                  <input
+                    type="text"
+                    className={`${styles.input} ${styles.inputCenter}`}
+                    placeholder="Nome da Arma"
+                    maxLength={40}
+                    value={ficha.nomeArma}
+                    onChange={(e) =>
+                      updateFicha((p) => ({
+                        ...p,
+                        armaEquipadaId: null,
+                        nomeArma: e.target.value,
+                      }))
+                    }
+                  />
 
-              <input
-                type="number"
-                min={0}
-                className={`${styles.input} ${styles.inputCenter}`}
-                placeholder="Dano Base"
-                value={ficha.danoArma}
-                onChange={(e) =>
-                  updateFicha((p) => ({
-                    ...p,
-                    armaEquipadaId: null,
-                    danoArma: Math.max(0, Number(e.target.value) || 0),
-                  }))
-                }
-              />
+                  <input
+                    type="number"
+                    min={0}
+                    className={`${styles.input} ${styles.inputCenter}`}
+                    placeholder="Dano Base"
+                    value={ficha.danoArma}
+                    onChange={(e) =>
+                      updateFicha((p) => ({
+                        ...p,
+                        armaEquipadaId: null,
+                        danoArma: Math.max(0, Number(e.target.value) || 0),
+                      }))
+                    }
+                  />
+                </div>
+              </div>
             </div>
           </section>
         )}
@@ -1584,12 +1701,12 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
             <header className={styles.panelHeader}>
               <h2 className={styles.panelTitle}>Inventário &amp; Mochila</h2>
               <p className={styles.panelSubtitle}>
-                Zona de Armas do Arsenal &amp; Bolsa de Equipamentos
+                Armas do personagem &amp; Bolsa de Equipamentos
               </p>
             </header>
             <hr className={`divisor-dourado ${styles.divider}`} />
 
-            {/* ZONA DE ARMAS DA MOCHILA */}
+            {/* ZONA DE ARMAS DA MOCHILA — somente leitura (gestão na aba Combate) */}
             <div className={styles.mochilaWeaponsBox}>
               <div className={styles.mochilaWeaponsHeader}>
                 <label className={styles.label} style={{ margin: 0 }}>
@@ -1598,61 +1715,17 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
                     style={{ display: 'inline-block', verticalAlign: '-2px' }}
                   />{' '}
                   Zona de Armas (Mochila){' '}
-                  <TooltipBadge text="Selecione armas criadas no Glossário -> Armas para guardar na mochila do personagem. Marque qual está Equipada para preencher automaticamente a aba Combate (somando Manualidade × 3) e levar seus golpes e áreas ao Tabuleiro." />
+                  <TooltipBadge text="Lista apenas informativa: nome das armas que o personagem carrega, o dano e se está equipada. Equipar, adicionar e remover faz-se na aba Combate." />
                 </label>
 
                 <button
                   type="button"
                   className={styles.mochilaEquipBtn}
-                  onClick={handleOpenArsenalFromSheet}
+                  onClick={() => setTab('combate')}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
                 >
-                  <Hammer size={12} /> Forjar / Editar no Arsenal
+                  <Swords size={12} /> Gerir na aba Combate
                 </button>
-              </div>
-
-              <div className={styles.mochilaPickerRow}>
-                {availableArsenalToAdd.length > 0 ? (
-                  <>
-                    <select
-                      className={styles.select}
-                      style={{ flex: 1, minWidth: 210 }}
-                      value={selectedArsenalToAdd}
-                      onChange={(e) => setSelectedArsenalToAdd(e.target.value)}
-                    >
-                      {availableArsenalToAdd.map((wp) => {
-                        const porte = inferEpitomeTipoFromWeapon(wp);
-                        return (
-                          <option key={wp.id} value={wp.id}>
-                            {wp.name} — {ARMA_TIPO_LABELS[porte]} • Base +
-                            {wp.baseDamage} • Alc. {wp.range}q (
-                            {wp.attackIds.length} atq.)
-                          </option>
-                        );
-                      })}
-                    </select>
-                    <button
-                      type="button"
-                      className={styles.btnPrimary}
-                      style={{ padding: '7px 14px' }}
-                      onClick={handleAddWeaponToMochila}
-                    >
-                      + Guardar na Mochila
-                    </button>
-                  </>
-                ) : (
-                  <span
-                    style={{
-                      fontSize: 12.5,
-                      fontStyle: 'italic',
-                      color: 'var(--color-pergaminho-400)',
-                    }}
-                  >
-                    {allArsenalWeapons.length === 0
-                      ? 'Nenhuma arma cadastrada no Arsenal ainda. Clique em "Forjar / Editar no Arsenal".'
-                      : 'Todas as armas disponíveis do Arsenal já estão guardadas nesta mochila.'}
-                  </span>
-                )}
               </div>
 
               {mochilaWeapons.length === 0 ? (
@@ -1665,20 +1738,13 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
                     color: 'var(--color-pergaminho-500)',
                   }}
                 >
-                  Nenhuma arma guardada na mochila. Escolha uma arma criada no
-                  Arsenal acima para adicionar ao personagem.
+                  Nenhuma arma guardada na mochila. Adiciona armas do Arsenal na
+                  aba Combate.
                 </div>
               ) : (
                 <div className={styles.mochilaWeaponList}>
                   {mochilaWeapons.map((wp) => {
                     const isEquipped = ficha.armaEquipadaId === wp.id;
-                    const porte = inferEpitomeTipoFromWeapon(wp);
-                    const danoComManualidade =
-                      wp.baseDamage + ficha._pericias.manualidade * 3;
-                    const attackNames = wp.attackIds
-                      .map((aid) => arsenalCatalog.attacks[aid]?.name)
-                      .filter(Boolean);
-
                     return (
                       <div
                         key={wp.id}
@@ -1690,64 +1756,34 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
                           <TokenAvatar
                             imageId={wp.iconId}
                             alt={wp.name}
-                            size={34}
+                            size={30}
                           />
                           <div style={{ minWidth: 0 }}>
                             <div className={styles.mochilaWeaponName}>
                               <span>{wp.name}</span>
-                              <span className={styles.mochilaBadgePorte}>
-                                {ARMA_TIPO_LABELS[porte]}
-                              </span>
-                              {isEquipped && (
-                                <span
-                                  className={styles.mochilaBadgeEquipped}
-                                  style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: 3,
-                                  }}
-                                >
-                                  <Check size={10} /> Equipada
-                                </span>
-                              )}
                             </div>
                             <div className={styles.mochilaWeaponMeta}>
-                              Dano Base +{wp.baseDamage} →{' '}
-                              <strong>
-                                Total c/ Manualidade: {danoComManualidade}
-                              </strong>{' '}
-                              • Alcance {wp.range}q
+                              Dano Base +{wp.baseDamage}
                             </div>
-                            {attackNames.length > 0 && (
-                              <div className={styles.mochilaWeaponAttacks}>
-                                Golpes: {attackNames.join(', ')}
-                              </div>
-                            )}
                           </div>
                         </div>
 
-                        <div className={styles.mochilaActions}>
-                          <button
-                            type="button"
-                            className={styles.mochilaEquipBtn}
-                            onClick={() => handleToggleEquipMochilaWeapon(wp.id)}
-                          >
-                            {isEquipped ? 'Desequipar' : 'Equipar'}
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.mochilaRemoveBtn}
-                            onClick={() => handleRemoveWeaponFromMochila(wp.id)}
-                            title="Retirar arma da mochila"
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <X size={12} />
-                          </button>
-                        </div>
+                        <span
+                          className={
+                            isEquipped
+                              ? styles.mochilaBadgeEquipped
+                              : styles.mochilaBadgeIdle
+                          }
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {isEquipped ? <Check size={10} /> : <Circle size={9} />}
+                          {isEquipped ? 'Equipada' : 'Não equipada'}
+                        </span>
                       </div>
                     );
                   })}
