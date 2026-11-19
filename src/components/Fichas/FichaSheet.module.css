@@ -22,12 +22,13 @@
   max-width: 880px;
   width: 100%;
   margin: 0 auto;
+  container: ficha / inline-size;
 }
 
 /* Abas superiores */
 .tabsNav {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 5px;
   margin-bottom: 12px;
 }
@@ -48,6 +49,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.tabBtn:focus-visible {
+  outline: 2px solid var(--color-dourado-200);
+  outline-offset: 2px;
 }
 
 .tabBtn:hover {
@@ -258,25 +264,10 @@
   pointer-events: none;
 }
 
-/* Badge de Linhagem */
-.linhagemBox {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 6px;
-}
-
-.linhagemBadge {
-  padding: 5px 16px;
-  border-radius: 999px;
-  font-family: var(--font-titulo1);
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  border: 1px solid rgba(187, 169, 139, 0.3);
-  color: var(--color-pergaminho-300);
-  background: rgba(18, 18, 18, 0.5);
+/* Linhagem na Identidade é somente para leitura. */
+.linhagemDica {
+  color: var(--color-pergaminho-400);
+  font-size: 11px;
 }
 
 .linhagem_pungente {
@@ -765,10 +756,27 @@
   border-color: var(--color-dourado-500);
 }
 
-@media (max-width: 700px) {
+@container ficha (max-width: 675px) {
   .tabsNav {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+}
+
+@container ficha (max-width: 410px) {
+  .tabBtn {
+    padding-inline: 4px;
+    font-size: 11px;
+    letter-spacing: 0.45px;
+  }
+}
+
+@container ficha (max-width: 375px) {
+  .tabsNav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
   .triadsGrid,
   .camposGrid,
   .row2,

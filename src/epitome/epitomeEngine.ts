@@ -10,6 +10,8 @@ import {
   PericiaKey,
   SlotKey,
 } from './epitomeTypes';
+import { isLinhagemDefinida } from './linhagemCatalogo';
+import { normalizarArvoreLinhagem } from './linhagemEngine';
 import {
   AreaCell,
   ArsenalCatalog,
@@ -364,6 +366,7 @@ export function criarFichaEmBranco(): EpitomeFicha {
     armaEquipadaId: null,
     avatarImageId: '',
     _pericias: criarPericiasZeradas(),
+    _arvoreLinhagem: { aprendidas: [], habilidadeExterna: null, energiasPorPericia: {} },
     _slots,
     _slotCustos,
     _estado: {
@@ -401,17 +404,9 @@ export function normalizarFicha(raw: any): EpitomeFicha {
     _slotCustos[k] = Number.isFinite(c) ? Math.max(0, c) : 0;
   }
 
-  const validLinhagens: LinhagemKey[] = [
-    '',
-    'pungente',
-    'erudita',
-    'agraco',
-    'desperta',
-    'espectro',
-  ];
-  const linhagem: LinhagemKey = validLinhagens.includes(raw.linhagem)
-    ? raw.linhagem
-    : '';
+  const linhagem = isLinhagemDefinida(raw.linhagem) ? raw.linhagem : '';
+  const nivelBruto = Number(raw.nivel === '' ? 1 : raw.nivel ?? 1);
+  const nivel = Number.isFinite(nivelBruto) ? Math.max(0, Math.floor(nivelBruto)) : 1;
 
   const validArmas: ArmaTipoKey[] = ['', 'Curta', 'Media', 'Longa', 'Magica'];
   const tipoArma: ArmaTipoKey = validArmas.includes(raw.tipoArma)
@@ -461,7 +456,7 @@ export function normalizarFicha(raw: any): EpitomeFicha {
     conceito: String(raw.conceito ?? ''),
     linhagem,
     tribo: String(raw.tribo ?? ''),
-    nivel: Math.max(0, Number(raw.nivel) || 1),
+    nivel,
     xp: Math.max(0, Number(raw.xp) || 0),
     tipoArma,
     nomeArma: String(raw.nomeArma ?? ''),
@@ -477,6 +472,7 @@ export function normalizarFicha(raw: any): EpitomeFicha {
     armaEquipadaId: rawEquipadaId,
     avatarImageId: raw.avatarImageId ? String(raw.avatarImageId) : '',
     _pericias: pericias,
+    _arvoreLinhagem: normalizarArvoreLinhagem(raw._arvoreLinhagem, pericias, linhagem),
     _slots,
     _slotCustos,
     _estado: {

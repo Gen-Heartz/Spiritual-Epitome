@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   Check,
   ChevronDown,
@@ -15,7 +15,6 @@ import {
   ArmaTipoKey,
   CircSimbolo,
   EpitomeFicha,
-  LinhagemKey,
   PericiaKey,
   SlotKey,
 } from '../../epitome/epitomeTypes';
@@ -40,10 +39,12 @@ import {
   importAndProcessImageFile,
 } from '../../utils/imageProcessor';
 import { TokenAvatar } from '../common/TokenAvatar';
+import { ArvoreLinhagem } from './ArvoreLinhagem';
 import styles from './FichaSheet.module.css';
 
 type FichaTab =
   | 'identidade'
+  | 'linhagem'
   | 'pericias'
   | 'campos'
   | 'combate'
@@ -97,6 +98,7 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
   const showToast = useGameStore((s) => s.showToast);
 
   const [tab, setTab] = useState<FichaTab>('identidade');
+  const linhagemId = useId();
   const [ficha, setFicha] = useState<EpitomeFicha>(() => criarFichaEmBranco());
   const [loaded, setLoaded] = useState(false);
   const [savedFeedback, setSavedFeedback] = useState(false);
@@ -187,6 +189,7 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
   const updateFicha = (updater: (prev: EpitomeFicha) => EpitomeFicha) => {
     setFicha((prev) => {
       const updated = updater(prev);
+      if (updated === prev) return prev;
       if (updated.nome !== prev.nome) {
         onNameChanged?.(updated.nome || 'Sem nome');
       }
@@ -489,11 +492,12 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
   return (
     <div className={wrapperClass} onClick={() => setOpenSlotPopup(null)}>
       <div className={styles.container}>
-        {/* Navegação das 6 Abas */}
+        {/* Navegação da ficha */}
         <nav className={styles.tabsNav} aria-label="Abas da Ficha">
           {(
             [
               ['identidade', 'Identidade'],
+              ['linhagem', 'Linhagem'],
               ['pericias', 'Perícias'],
               ['campos', 'Campos'],
               ['combate', 'Combate'],
@@ -507,6 +511,7 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
               className={`${styles.tabBtn} ${
                 tab === id ? styles.tabBtnActive : ''
               }`}
+              aria-current={tab === id ? true : undefined}
               onClick={() => setTab(id)}
             >
               {label}
@@ -582,27 +587,20 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
 
             <div className={styles.row2}>
               <div className={styles.fieldGroup}>
-                <label className={styles.label}>
-                  Linhagem{' '}
-                  <TooltipBadge text="Define a origem da energia sobrenatural do personagem." />
-                </label>
-                <select
-                  className={styles.select}
-                  value={ficha.linhagem}
-                  onChange={(e) =>
-                    updateFicha((p) => ({
-                      ...p,
-                      linhagem: e.target.value as LinhagemKey,
-                    }))
-                  }
-                >
-                  <option value="">-- Escolha --</option>
-                  <option value="pungente">Pungente</option>
-                  <option value="erudita">Erudita</option>
-                  <option value="agraco">Agraço</option>
-                  <option value="desperta">Desperta</option>
-                  <option value="espectro">Espectro</option>
-                </select>
+                <label className={styles.label} htmlFor={linhagemId}>Linhagem</label>
+                <input
+                  id={linhagemId}
+                  type="text"
+                  readOnly
+                  className={`${styles.input} ${styles.inputReadonly} ${
+                    ficha.linhagem ? styles[`linhagem_${ficha.linhagem}`] : ''
+                  }`}
+                  value={LINHAGEM_LABELS[ficha.linhagem]}
+                  aria-describedby={`${linhagemId}-dica`}
+                />
+                <small className={styles.linhagemDica} id={`${linhagemId}-dica`}>
+                  A linhagem é definida na aba Linhagem.
+                </small>
               </div>
 
               <div className={styles.fieldGroup}>
@@ -620,18 +618,6 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
                   }
                 />
               </div>
-            </div>
-
-            <div className={styles.linhagemBox}>
-              <span
-                className={`${styles.linhagemBadge} ${
-                  ficha.linhagem
-                    ? (styles as any)[`linhagem_${ficha.linhagem}`] || ''
-                    : ''
-                }`}
-              >
-                {LINHAGEM_LABELS[ficha.linhagem]}
-              </span>
             </div>
 
             {/* Token do Tabuleiro */}
@@ -700,7 +686,12 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
           </section>
         )}
 
-        {/* ===================== ABA 2: PERÍCIAS ===================== */}
+        {/* ===================== ABA 2: LINHAGEM ===================== */}
+        {tab === 'linhagem' && (
+          <ArvoreLinhagem key={ficha.id} ficha={ficha} atualizarFicha={updateFicha} />
+        )}
+
+        {/* ===================== ABA 3: PERÍCIAS ===================== */}
         {tab === 'pericias' && (
           <section className={styles.panelFrame}>
             <div className={`${styles.corner} ${styles.cornerTl}`} />
@@ -824,7 +815,7 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
           </section>
         )}
 
-        {/* ===================== ABA 3: OS 4 CAMPOS ===================== */}
+        {/* ===================== ABA 4: OS 4 CAMPOS ===================== */}
         {tab === 'campos' && (
           <section className={styles.panelFrame}>
             <div className={`${styles.corner} ${styles.cornerTl}`} />
@@ -1183,7 +1174,7 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
           </section>
         )}
 
-        {/* ===================== ABA 4: COMBATE ===================== */}
+        {/* ===================== ABA 5: COMBATE ===================== */}
         {tab === 'combate' && (
           <section className={styles.panelFrame}>
             <div className={`${styles.corner} ${styles.cornerTl}`} />
@@ -1520,7 +1511,7 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
           </section>
         )}
 
-        {/* ===================== ABA 5: MAGIA ===================== */}
+        {/* ===================== ABA 6: MAGIA ===================== */}
         {tab === 'magia' && (
           <section className={styles.panelFrame}>
             <div className={`${styles.corner} ${styles.cornerTl}`} />
@@ -1690,7 +1681,7 @@ export const FichaSheet: React.FC<FichaSheetProps> = ({
           </section>
         )}
 
-        {/* ===================== ABA 6: INVENTÁRIO (MOCHILA + ZONA DE ARMAS) ===================== */}
+        {/* ===================== ABA 7: INVENTÁRIO (MOCHILA + ZONA DE ARMAS) ===================== */}
         {tab === 'inventario' && (
           <section className={styles.panelFrame}>
             <div className={`${styles.corner} ${styles.cornerTl}`} />

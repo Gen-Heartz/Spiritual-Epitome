@@ -6,6 +6,11 @@ export type LinhagemKey =
   | 'desperta'
   | 'espectro';
 
+export type LinhagemDefinida = Exclude<LinhagemKey, ''>;
+export type FacetaLinhagemKey = 'material' | 'efetiva';
+export type RamoLinhagemKey = LinhagemDefinida | FacetaLinhagemKey;
+export type HabilidadeLinhagemId = `${RamoLinhagemKey}:${string}`;
+
 export type ArmaTipoKey = '' | 'Curta' | 'Media' | 'Longa' | 'Magica';
 
 export type CircSimbolo = '' | 'X' | 'O' | 'Q';
@@ -52,6 +57,15 @@ export type SlotKey =
   | 'ext-5'
   | 'ext-6';
 
+export interface ProgressoLinhagem {
+  /** Habilidades das facetas ou de uma raiz; marcas de raízes inativas ficam arquivadas. */
+  aprendidas: HabilidadeLinhagemId[];
+  /** Única habilidade aprendida por vínculo com outra energia. */
+  habilidadeExterna: HabilidadeLinhagemId | null;
+  /** Registro manual da perícia usada para aprender cada energia externa. */
+  energiasPorPericia: Partial<Record<LinhagemDefinida, PericiaKey>>;
+}
+
 export interface EpitomeEstadoRecursos {
   vidaAtual: number;
   vidaVendida: number;
@@ -90,6 +104,7 @@ export interface EpitomeFicha {
   /** Emblema ou retrato customizado para o token no Tabuleiro Tático */
   avatarImageId?: string;
   _pericias: Record<PericiaKey, number>;
+  _arvoreLinhagem: ProgressoLinhagem;
   _slots: Record<SlotKey, string>;
   _slotCustos: Record<SlotKey, number>;
   _estado: EpitomeEstadoRecursos;
